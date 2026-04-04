@@ -1,0 +1,173 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  SELLER
+  BIDDER
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum AuctionStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum BidStatus {
+  SUCCESS
+  REJECTED
+}
+
+enum OTPType {
+  RESET_PASSWORD
+  LOGIN_2FA
+}
+
+enum NotificationType {
+  OUTBID
+  AUCTION_END
+  WINNER
+  SYSTEM
+}
+
+// 3. Các Model (Bảng dữ liệu)
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  passwordHash    String
+  fullName        String
+  role            UserRole @default(BIDDER)
+  avatarUrl       String?
+  is2faEnabled    Boolean  @default(false)
+  twoFactorSecret String?
+  status          UserStatus @default(ACTIVE)
+  createdAt       DateTime @default(now())
+
+  products        Product[]
+  bids            Bid[]
+  bidLogs         BidLog[]
+  notifications   Notification[]
+  otps            AuthOTP[]
+  wonAuctions     Auction[] @relation("AuctionWinner")
+
+  @@map("users")
+}
+
+model AuthOTP {
+  id        String   @id @default(uuid())
+  userId    String
+  code      String
+  type      OTPType
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("auth_otps")
+}
+
+model Category {
+  id       String    @id @default(uuid())
+  name     String
+  slug     String    @unique
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  sellerId    String
+  seller      User     @relation(fields: [sellerId], references: [id])
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  name        String
+  description String   @db.Text
+  images      Json     // Lưu mảng URL hình ảnh: ["url1", "url2"]
+  createdAt   DateTime @default(now())
+  
+  auctions    Auction[]
+
+  @@map("products")
+}
+
+model Auction {
+  id               String        @id @default(uuid())
+  productId        String
+  startingPrice    Decimal       @db.Decimal(15, 2)
+  currentPrice     Decimal       @db.Decimal(15, 2)
+  version          Int           @default(0)
+  bidIncrement     Decimal       @db.Decimal(15, 2)
+  startTime        DateTime
+  endTime          DateTime
+  currentWinnerId  String?
+  status           AuctionStatus @default(PENDING)
+  sniperProtection Boolean       @default(true)
+
+  product          Product       @relation(fields: [productId], references: [id])
+  // Field quan trọng để xử lý tranh chấp (Optimistic Locking)
+  currentWinner    User?         @relation("AuctionWinner", fields: [currentWinnerId], references: [id])
+  bids             Bid[]
+  bidLogs          BidLog[]
+
+  @@map("auctions")
+}
+
+model Bid {
+  id        String   @id @default(uuid())
+  auctionId String
+  bidderId  String
+  amount    Decimal  @db.Decimal(15, 2)
+  createdAt DateTime @default(now())
+
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+  bidder    User     @relation(fields: [bidderId], references: [id])
+
+  @@map("bids")
+}
+
+model BidLog {
+  id        String    @id @default(uuid())
+  auctionId String
+  bidderId  String
+  amount    Decimal   @db.Decimal(15, 2)
+  status    BidStatus
+  reason    String?   // Ví dụ: "LOWER_THAN_CURRENT", "AUCTION_ENDED"
+  createdAt DateTime  @default(now())
+
+  auction   Auction   @relation(fields: [auctionId], references: [id])
+  bidder    User      @relation(fields: [bidderId], references: [id])
+
+  @@map("bid_logs")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  title     String
+  content   String           @db.Text
+  type      NotificationType
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
