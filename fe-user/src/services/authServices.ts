@@ -20,3 +20,17 @@ export const signup = async (
     };
   }
 };
+
+export const login = async (email: string, password: string) => {
+  try {
+    const res = await httpRequest.post("auth/login", {
+      email,
+      password,
+    });
+    return res;
+  } catch (error: any) {
+    return {
+      error: error.response?.data?.message || "Đăng nhập thất bại",
+    };
+  }
+};

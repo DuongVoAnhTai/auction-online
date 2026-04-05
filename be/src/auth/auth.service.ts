@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -10,14 +11,19 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async login(email: string, pass: string) {
-    const user = await this.usersService.findByEmail(email);
-    if (!user) throw new UnauthorizedException('Email không tồn tại');
+  async login(loginDto: LoginDto) {
+    const { email, password } = loginDto;
 
-    const isMatch = await bcrypt.compare(pass, user.passwordHash);
-    if (!isMatch) throw new UnauthorizedException('Sai mật khẩu');
+    const user = await this.usersService.findByEmail(email);
+    if (!user)
+      throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch)
+      throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
 
     const payload = { sub: user.id, email: user.email, role: user.role };
+
     return {
       access_token: await this.jwtService.signAsync(payload),
       user: {

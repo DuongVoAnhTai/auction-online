@@ -9,6 +9,8 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 import * as authServices from "@/services/authServices";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const registerSchema = z
   .object({
@@ -44,6 +46,7 @@ const registerSchema = z
 type RegisterValues = z.infer<typeof registerSchema>;
 
 export default function SignUpForm() {
+  const router = useRouter();
   const {
     control,
     handleSubmit,
@@ -70,7 +73,7 @@ export default function SignUpForm() {
       toast.error(result.error);
     } else {
       toast.success("Đăng ký thành công!");
-      // Chuyển hướng sang trang login hoặc 2FA...
+      router.push("/login");
     }
   }
 
@@ -90,7 +93,11 @@ export default function SignUpForm() {
             render={({ field }) => (
               <Field>
                 <FieldLabel>Họ và tên</FieldLabel>
-                <Input placeholder="Nguyễn Văn A" {...field} />
+                <Input
+                  placeholder="Nguyễn Văn A"
+                  autoComplete="name"
+                  {...field}
+                />
                 {errors.fullName && (
                   <FieldError>{errors.fullName.message}</FieldError>
                 )}
@@ -105,7 +112,12 @@ export default function SignUpForm() {
             render={({ field }) => (
               <Field>
                 <FieldLabel>Email</FieldLabel>
-                <Input type="email" placeholder="name@example.com" {...field} />
+                <Input
+                  type="email"
+                  placeholder="name@example.com"
+                  autoComplete="email"
+                  {...field}
+                />
                 {errors.email && (
                   <FieldError>{errors.email.message}</FieldError>
                 )}
@@ -120,7 +132,7 @@ export default function SignUpForm() {
             render={({ field }) => (
               <Field>
                 <FieldLabel>Mật khẩu</FieldLabel>
-                <Input type="password" {...field} />
+                <Input type="password" autoComplete="new-password" {...field} />
                 {errors.password && (
                   <FieldError>{errors.password.message}</FieldError>
                 )}
@@ -134,7 +146,7 @@ export default function SignUpForm() {
             render={({ field }) => (
               <Field>
                 <FieldLabel>Xác nhận mật khẩu</FieldLabel>
-                <Input type="password" {...field} />
+                <Input type="password" autoComplete="new-password" {...field} />
                 {errors.confirmPassword && (
                   <FieldError>{errors.confirmPassword.message}</FieldError>
                 )}
@@ -145,6 +157,16 @@ export default function SignUpForm() {
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Đang xử lý..." : "Tạo tài khoản"}
           </Button>
+
+          <div className="text-center text-sm text-muted-foreground mt-4">
+            Đã có tài khoản?{" "}
+            <Link
+              href="/login"
+              className="font-medium text-primary underline underline-offset-4 hover:opacity-80 transition-opacity"
+            >
+              Đăng nhập ngay
+            </Link>
+          </div>
         </form>
       </CardContent>
     </Card>
