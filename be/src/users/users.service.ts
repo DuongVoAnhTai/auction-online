@@ -1,4 +1,8 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from 'src/auth/dto/register.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -18,16 +22,23 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
+    // Sinh avatar mặc định
+    const nameForAvatar = data.fullName.replace(/\s+/g, '+'); // Đổi khoảng trắng thành dấu +
+    const defaultAvatarUrl = `https://ui-avatars.com/api/?name=${nameForAvatar}&background=random&color=ffff&size=128`;
+
     return this.prisma.user.create({
       data: {
         email: data.email,
         fullName: data.fullName,
         passwordHash: hashedPassword,
+        avatarUrl: defaultAvatarUrl,
       },
       select: {
         id: true,
         email: true,
         fullName: true,
+        avatarUrl: true,
+        role: true,
       },
     });
   }

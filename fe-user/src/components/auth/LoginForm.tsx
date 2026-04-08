@@ -51,7 +51,7 @@ export function LoginForm() {
       Cookies.set("access_token", result.access_token, { expires: 1 });
 
       // 2. Lưu thông tin User (Phải chuyển sang string vì Cookie chỉ lưu chuỗi)
-      Cookies.set("user", JSON.stringify(result.user), { expires: 7 });
+      Cookies.set("user", JSON.stringify(result.user), { expires: 1 });
 
       // Chuyển hướng về trang chủ
       router.push("/");
