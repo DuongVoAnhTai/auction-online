@@ -5,20 +5,29 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class AuctionsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAllActive() {
+  async findAll(
+    query: {
+      status?: string;
+      limit?: number;
+      categoryId?: string;
+      sort?: string;
+    } = {},
+  ) {
+    const { status, limit, categoryId, sort } = query;
+
     return this.prisma.auction.findMany({
       where: {
-        status: 'ACTIVE', // Chỉ lấy những phiên đang diễn ra
+        ...(status && { status: status as any }),
+        ...(categoryId && { product: { categoryId } }),
+      },
+      take: limit ? Number(limit) : undefined, // Nếu truyền limit thì lấy đúng số lượng đó
+      orderBy: {
+        ...(sort === 'price_asc' && { currentPrice: 'asc' }),
+        ...(sort === 'ending_soon' && { endTime: 'asc' }),
+        ...(!sort && { startTime: 'desc' }), // Mặc định là mới nhất
       },
       include: {
-        product: {
-          include: {
-            category: true, // Lấy luôn tên danh mục
-          },
-        },
-      },
-      orderBy: {
-        endTime: 'asc', // Phiên nào sắp kết thúc thì hiện lên đầu
+        product: { include: { category: true } },
       },
     });
   }

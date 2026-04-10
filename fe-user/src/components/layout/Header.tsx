@@ -119,7 +119,7 @@ export function Header() {
         <div className="flex items-center gap-2 md:gap-4">
           {/* Đồng hồ (Ẩn trên điện thoại nhỏ) */}
           {mounted && (
-            <div className="hidden xs:flex items-center gap-1.5 text-[10px] md:text-xs font-mono text-muted-foreground bg-secondary px-2 py-1 rounded-md">
+            <div className="hidden md:flex items-center gap-1.5 text-[10px] md:text-xs font-mono text-muted-foreground bg-secondary px-2 py-1 rounded-md">
               <Clock className="h-3 w-3" />
               {time.toLocaleTimeString()}
             </div>
