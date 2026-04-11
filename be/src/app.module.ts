@@ -9,9 +9,10 @@ import { MailModule } from './mail/mail.module';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { AuctionsService } from './auctions/auctions.service';
 import { AuctionsController } from './auctions/auctions.controller';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, UsersModule, MailModule],
+  imports: [PrismaModule, AuthModule, UsersModule, MailModule, CategoriesModule],
   controllers: [AppController, AuctionsController],
   providers: [AppService, MailService, CloudinaryService, AuctionsService],
 })

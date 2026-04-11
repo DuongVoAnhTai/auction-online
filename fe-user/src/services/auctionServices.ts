@@ -9,3 +9,13 @@ export const getAuctions = async (query: any) => {
     return [];
   }
 };
+
+export const getCategories = async () => {
+  try {
+    const res = await httpRequest.get("categories");
+    return res;
+  } catch (error) {
+    console.error("Lỗi lấy danh mục:", error);
+    return [];
+  }
+};
