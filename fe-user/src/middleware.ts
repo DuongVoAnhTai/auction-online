@@ -19,7 +19,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Cấu hình Middleware chạy cho những đường dẫn nào
+// Cấu hình Middleware chạy cho những đường dẫn này
 export const config = {
-  matcher: ["/login", "/register", "/profile/:path*", "/auction/:path*"],
+  matcher: ["/login", "/signup", "/profile/:path*", "/auctions/:path*"],
 };

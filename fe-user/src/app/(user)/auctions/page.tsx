@@ -1,13 +1,6 @@
 import { getAuctions, getCategories } from "@/services/auctionServices";
 import { AuctionCard } from "@/components/auction/AuctionCard";
 import { AuctionFilter } from "@/components/auction/AuctionFilter";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { SortSelect } from "@/components/auction/SortSelect";
 
 export const metadata = { title: "Danh sách sản phẩm - Hệ thống đấu giá" };

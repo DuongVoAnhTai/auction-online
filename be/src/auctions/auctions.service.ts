@@ -39,4 +39,28 @@ export class AuctionsService {
       },
     });
   }
+
+  async findOne(id: string) {
+    return this.prisma.auction.findUnique({
+      where: { id },
+      include: {
+        product: {
+          include: {
+            category: true,
+            seller: {
+              // Lấy thông tin người bán
+              select: { fullName: true, avatarUrl: true, email: true },
+            },
+          },
+        },
+        bids: {
+          orderBy: { amount: 'desc' },
+          take: 10, // Lấy 10 lượt trả giá gần nhất để hiện lịch sử
+          include: {
+            bidder: { select: { fullName: true, avatarUrl: true } },
+          },
+        },
+      },
+    });
+  }
 }

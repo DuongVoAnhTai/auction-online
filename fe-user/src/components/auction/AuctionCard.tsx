@@ -164,7 +164,7 @@ export function AuctionCard({ auction }: { auction: any }) {
           }
           disabled={timeLeft.isEnded}
         >
-          <Link href={`/auction/${auction.id}`}>
+          <Link href={`/auctions/${auction.id}`}>
             <Gavel className="mr-2 h-4 w-4" />{" "}
             {timeLeft.isPending
               ? "Xem trước"

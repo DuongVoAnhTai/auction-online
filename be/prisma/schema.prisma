@@ -95,15 +95,15 @@ model Category {
 model Product {
   id          String   @id @default(uuid())
   sellerId    String
-  seller      User     @relation(fields: [sellerId], references: [id])
   categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
   name        String
   description String   @db.Text
   images      Json     // Lưu mảng URL hình ảnh: ["url1", "url2"]
   createdAt   DateTime @default(now())
   
   auctions    Auction[]
+  seller      User     @relation(fields: [sellerId], references: [id])
+  category    Category @relation(fields: [categoryId], references: [id])
 
   @@map("products")
 }

@@ -19,3 +19,13 @@ export const getCategories = async () => {
     return [];
   }
 };
+
+export const getAuctionDetail = async (id: string) => {
+  try {
+    const res = await httpRequest.get(`auctions/${id}`);
+    return res;
+  } catch (error) {
+    console.error("Lỗi lấy chi tiết đấu giá:", error);
+    return null;
+  }
+};

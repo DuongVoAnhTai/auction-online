@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import z from "zod";
 import * as authServices from "@/services/authServices";
 import { Controller, useForm } from "react-hook-form";
@@ -29,6 +29,8 @@ const loginSchema = z.object({
 });
 
 export function LoginForm() {
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect");
   const router = useRouter();
   const {
     control,
@@ -54,7 +56,8 @@ export function LoginForm() {
       Cookies.set("user", JSON.stringify(result.user), { expires: 1 });
 
       // Chuyển hướng về trang chủ
-      router.push("/");
+      const destination = redirectUrl || "/";
+      router.push(destination);
       router.refresh();
     }
   }
