@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, TrendingUp, AlertCircle } from "lucide-react";
-import Link from "next/link";
+import { useAuctionSocket } from "@/hooks/useAuctionSocket";
 
 export function BiddingPanel({ auction }: { auction: any }) {
   const { user } = useAuth();
@@ -16,9 +17,66 @@ export function BiddingPanel({ auction }: { auction: any }) {
   const [bidAmount, setBidAmount] = useState<number>(0);
   const pathname = usePathname();
 
+  const { currentPrice, placeBid } = useAuctionSocket(
+    auction.id,
+    Number(auction.currentPrice),
+  );
+
   // Mức giá tối thiểu người dùng phải trả
-  const minNextBid =
-    Number(auction.currentPrice) + Number(auction.bidIncrement);
+  const minNextBid = currentPrice + Number(auction.bidIncrement);
+
+  // 2. Sử dụng useRef để giữ kết nối socket không bị khởi tạo lại khi re-render
+  // const socketRef = useRef<Socket | null>(null);
+
+  // useEffect(() => {
+  //   // 3. Khởi tạo kết nối tới namespace 'auctions'
+  //   socketRef.current = io("http://localhost:8080/auctions", {
+  //     withCredentials: true,
+  //   });
+
+  //   const socket = socketRef.current;
+
+  //   // 4. Lắng nghe sự kiện khi kết nối thành công
+  //   socket.on("connect", () => {
+  //     console.log("✅ Đã kết nối tới WebSocket Server. ID:", socket.id);
+
+  //     // 5. Gửi tín hiệu 'joinAuction' để vào phòng riêng của sản phẩm này
+  //     socket.emit("joinAuction", auction.id);
+  //   });
+
+  //   // 6. Lắng nghe phản hồi từ server (nếu cần)
+  //   socket.on("joined", (data) => {
+  //     console.log(`🏠 Đã vào phòng đấu giá: auction_${data}`);
+  //   });
+
+  //   // --- PHẦN LOGIC ĐẾM NGƯỢC ---
+  //   setBidAmount(minNextBid); // Gợi ý sẵn mức giá tối thiểu
+
+  //   const timer = setInterval(() => {
+  //     const now = new Date().getTime();
+  //     const end = new Date(auction.endTime).getTime();
+  //     const diff = end - now;
+
+  //     if (diff <= 0) {
+  //       setTimeLeft("Đã kết thúc");
+  //       clearInterval(timer);
+  //       return;
+  //     }
+
+  //     const h = Math.floor(diff / (1000 * 60 * 60));
+  //     const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  //     const s = Math.floor((diff % (1000 * 60)) / 1000);
+  //     setTimeLeft(`${h}h ${m}m ${s}s`);
+  //   }, 1000);
+
+  //   // --- CLEANUP: QUAN TRỌNG ---
+  //   return () => {
+  //     console.log("🔌 Đang ngắt kết nối socket...");
+  //     socket.emit("leaveAuction", auction.id); // Báo cho server biết mình rời phòng
+  //     socket.disconnect(); // Ngắt kết nối hẳn
+  //     clearInterval(timer);
+  //   };
+  // }, [auction.id]);
 
   useEffect(() => {
     setBidAmount(minNextBid); // Gợi ý sẵn mức giá tối thiểu
@@ -45,6 +103,7 @@ export function BiddingPanel({ auction }: { auction: any }) {
 
   const handleQuickBid = (amount: number) => {
     setBidAmount(Number(auction.currentPrice) + amount);
+    placeBid(bidAmount);
   };
 
   return (
@@ -55,8 +114,11 @@ export function BiddingPanel({ auction }: { auction: any }) {
             <Clock className="h-5 w-5" />
             <span className="font-mono text-xl font-bold">{timeLeft}</span>
           </div>
-          <Badge variant="secondary" className="animate-pulse">
-            Đang diễn ra
+          <Badge
+            variant="secondary"
+            className={timeLeft === "Đã kết thúc" ? "" : "animate-pulse"}
+          >
+            {timeLeft === "Đã kết thúc" ? "Đã kết thúc" : "Đang diễn ra"}
           </Badge>
         </div>
       </div>
@@ -69,7 +131,7 @@ export function BiddingPanel({ auction }: { auction: any }) {
               Giá cao nhất hiện tại
             </p>
             <p className="text-3xl font-extrabold text-primary">
-              {Number(auction.currentPrice).toLocaleString()}đ
+              {currentPrice.toLocaleString()}đ
             </p>
           </div>
           <TrendingUp className="h-8 w-8 text-emerald-500" />
