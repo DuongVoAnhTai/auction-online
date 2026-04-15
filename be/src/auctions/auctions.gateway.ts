@@ -8,6 +8,8 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { AuctionsService } from './auctions.service';
+import { JwtService } from '@nestjs/jwt';
 
 // Cấu hình Gateway với CORS để cho phép Frontend truy cập
 @WebSocketGateway({
@@ -22,6 +24,11 @@ export class AuctionsGateway
 {
   @WebSocketServer()
   server: Server;
+
+  constructor(
+    private readonly auctionsService: AuctionsService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   // 1. Chạy khi có một người dùng kết nối vào Socket
   handleConnection(client: Socket) {
@@ -62,23 +69,34 @@ export class AuctionsGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { auctionId: string; amount: number },
   ) {
-    // 1. Ở đây Tài sẽ phải gọi Service để:
-    // - Kiểm tra xem user có token không (Xác thực)
-    // - Kiểm tra giá mới có lớn hơn giá cũ + bước giá không
-    // - Kiểm tra phiên còn thời gian không
-    // - Lưu lượt Bid mới vào bảng Bids, cập nhật currentPrice ở bảng Auction
+    try {
+      const token = client.handshake.headers.authorization?.split(' ')[1];
+      if (!token) throw new Error('Unauthorized');
 
-    // Tạm thời mình giả lập xử lý thành công:
-    const newPrice = data.amount;
-    const bidderName = 'Người dùng ẩn danh'; // Sau này lấy từ JWT
+      const payload = await this.jwtService.verifyAsync(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      const userId = payload.sub;
 
-    // 2. Phát tín hiệu cho tất cả mọi người trong phòng
-    this.server.to(`auction_${data.auctionId}`).emit('bidUpdated', {
-      newPrice: newPrice,
-      bidderName: bidderName,
-      newBid: {
-        /* dữ liệu lượt bid vừa lưu */
-      },
-    });
+      // 2. Gọi service xử lý
+      const result = await this.auctionsService.placeBid(
+        userId,
+        data.auctionId,
+        data.amount,
+      );
+
+      // 3. Phát tán cho TẤT CẢ mọi người trong phòng
+      this.server.to(`auction_${data.auctionId}`).emit('bidUpdated', {
+        newPrice: Number(result.updatedAuction.currentPrice),
+        bidderName: result.newBid.bidder.fullName,
+        newBid: result.newBid,
+        newEndTime: result.updatedAuction.endTime, // Gửi kèm thời gian mới nếu có gia hạn
+      });
+
+      return { status: 'success' };
+    } catch (error) {
+      // Gửi lỗi riêng cho người vừa bid thất bại
+      client.emit('exception', { message: error.message });
+    }
   }
 }

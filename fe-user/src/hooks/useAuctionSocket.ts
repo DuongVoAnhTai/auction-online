@@ -1,17 +1,29 @@
 import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { toast } from "sonner";
+import Cookies from "js-cookie";
 
-export const useAuctionSocket = (auctionId: string, initialPrice: number) => {
+export const useAuctionSocket = (
+  auctionId: string,
+  initialPrice: number,
+  initialEndTime: string,
+  initialBids: any[] = [],
+) => {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number>(initialPrice);
-  const [bidHistory, setBidHistory] = useState<any[]>([]);
+  const [bidHistory, setBidHistory] = useState<any[]>(initialBids);
+  const [endTime, setEndTime] = useState<string>(initialEndTime);
 
   useEffect(() => {
+    const token = Cookies.get("access_token");
+
     // 1. Khởi tạo socket
     const socket = io("http://localhost:8080/auctions", {
       withCredentials: true,
+      extraHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
     });
     socketRef.current = socket;
 
@@ -29,14 +41,18 @@ export const useAuctionSocket = (auctionId: string, initialPrice: number) => {
     // 3. Lắng nghe cập nhật giá mới (Chúng ta sẽ làm sự kiện này ở bước sau)
     socket.on(
       "bidUpdated",
-      (data: { newPrice: number; bidderName: string; newBid: any }) => {
+      (data: { newPrice: number; newBid: any; newEndTime?: string }) => {
         setCurrentPrice(data.newPrice);
-        setBidHistory((prev) => [data.newBid, ...prev].slice(0, 10)); // Thêm vào lịch sử
+        setBidHistory((prev) => [data.newBid, ...prev].slice(0, 10));
 
-        // Thông báo cho người dùng khác (trừ người vừa đặt)
-        toast.info(
-          `${data.bidderName} vừa trả giá ${data.newPrice.toLocaleString()}đ`,
-        );
+        // CẬP NHẬT THỜI GIAN MỚI NẾU CÓ
+        if (
+          data.newEndTime &&
+          new Date(data.newEndTime).getTime() !== new Date(endTime).getTime()
+        ) {
+          setEndTime(data.newEndTime);
+          toast.warning("Thời gian đấu giá đã được gia hạn thêm!");
+        }
       },
     );
 
@@ -59,5 +75,12 @@ export const useAuctionSocket = (auctionId: string, initialPrice: number) => {
     }
   };
 
-  return { isConnected, currentPrice, bidHistory, placeBid, setBidHistory };
+  return {
+    isConnected,
+    endTime,
+    currentPrice,
+    bidHistory,
+    placeBid,
+    setBidHistory,
+  };
 };

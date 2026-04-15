@@ -1,5 +1,4 @@
 import { getAuctionDetail } from "@/services/auctionServices";
-import { BidHistory } from "@/components/auction/BidHistory";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { BiddingPanel } from "@/components/auction/BiddingPanel";
@@ -73,12 +72,8 @@ export default async function AuctionDetailPage({ params }: any) {
 
         {/* CỘT PHẢI: 5/12 - Khu vực đấu giá */}
         <div className="lg:col-span-5 space-y-6">
-          {/* BiddingPanel sẽ chứa đồng hồ, giá hiện tại và form đặt giá */}
+          {/* BiddingPanel sẽ chứa đồng hồ, giá hiện tại, form đặt giá và lịch sử trả giá */}
           <BiddingPanel auction={auction} />
-
-          <div className="border rounded-xl p-6 bg-slate-50/50">
-            <BidHistory bids={auction.bids} />
-          </div>
         </div>
       </div>
     </div>

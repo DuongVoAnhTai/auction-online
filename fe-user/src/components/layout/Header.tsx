@@ -201,7 +201,7 @@ export function Header() {
                 <Link href="/login">Đăng nhập</Link>
               </Button>
               <Button size="sm" asChild className="text-xs md:text-sm">
-                <Link href="/register">Đăng ký</Link>
+                <Link href="/signup">Đăng ký</Link>
               </Button>
             </div>
           )}

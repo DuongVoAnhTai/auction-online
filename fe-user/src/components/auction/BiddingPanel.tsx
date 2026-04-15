@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, TrendingUp, AlertCircle } from "lucide-react";
 import { useAuctionSocket } from "@/hooks/useAuctionSocket";
+import { BidHistory } from "./BidHistory";
 
 export function BiddingPanel({ auction }: { auction: any }) {
   const { user } = useAuth();
@@ -17,9 +18,11 @@ export function BiddingPanel({ auction }: { auction: any }) {
   const [bidAmount, setBidAmount] = useState<number>(0);
   const pathname = usePathname();
 
-  const { currentPrice, placeBid } = useAuctionSocket(
+  const { currentPrice, endTime, placeBid, bidHistory } = useAuctionSocket(
     auction.id,
     Number(auction.currentPrice),
+    auction.endTime,
+    auction.bids || [],
   );
 
   // Mức giá tối thiểu người dùng phải trả
@@ -83,7 +86,7 @@ export function BiddingPanel({ auction }: { auction: any }) {
 
     const timer = setInterval(() => {
       const now = new Date().getTime();
-      const end = new Date(auction.endTime).getTime();
+      const end = new Date(endTime).getTime();
       const diff = end - now;
 
       if (diff <= 0) {
@@ -99,11 +102,12 @@ export function BiddingPanel({ auction }: { auction: any }) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [auction.endTime, auction.currentPrice]);
+  }, [endTime, currentPrice]);
 
   const handleQuickBid = (amount: number) => {
-    setBidAmount(Number(auction.currentPrice) + amount);
-    placeBid(bidAmount);
+    const newAmount = currentPrice + amount;
+    setBidAmount(newAmount);
+    // placeBid(newAmount);
   };
 
   return (
@@ -185,12 +189,17 @@ export function BiddingPanel({ auction }: { auction: any }) {
             <Button
               className="w-full h-12 text-lg font-bold"
               disabled={bidAmount < minNextBid || timeLeft === "Đã kết thúc"}
+              onClick={() => placeBid(bidAmount)}
             >
               {timeLeft === "Đã kết thúc" ? "PHIÊN ĐÃ ĐÓNG" : "ĐẶT GIÁ NGAY"}
             </Button>
           </div>
         )}
       </CardContent>
+
+      <div className="border-t p-6 bg-slate-50/50">
+        <BidHistory bids={bidHistory} />
+      </div>
     </Card>
   );
 }
