@@ -10,6 +10,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { AuctionsService } from './auctions.service';
 import { JwtService } from '@nestjs/jwt';
+import { Cron } from '@nestjs/schedule';
 
 // Cấu hình Gateway với CORS để cho phép Frontend truy cập
 @WebSocketGateway({
@@ -64,6 +65,7 @@ export class AuctionsGateway
     console.log(`👤 Client ${client.id} đã rời phòng: auction_${auctionId}`);
   }
 
+  // 5. Sự kiện: Đặt giá
   @SubscribeMessage('placeBid')
   async handlePlaceBid(
     @ConnectedSocket() client: Socket,
@@ -97,6 +99,44 @@ export class AuctionsGateway
     } catch (error) {
       // Gửi lỗi riêng cho người vừa bid thất bại
       client.emit('exception', { message: error.message });
+    }
+  }
+
+  @Cron('*/10 * * * * *')
+  async handleAuctionCron() {
+    const result = await this.auctionsService.updateAuctionStatuses();
+
+    // Nếu có phiên vừa bắt đầu
+    if (result.activatedCount > 0) {
+      this.server.emit('globalUpdate', {
+        message: `🎉 Có ${result.activatedCount} phiên đấu giá mới vừa bắt đầu! Khám phá ngay.`,
+        type: 'INFO',
+      });
+    }
+
+    // Auction Started
+    if (result.activatedIds && result.activatedIds.length > 0) {
+      for (const id of result.activatedIds) {
+        this.server.to(`auction_${id}`).emit('auctionStarted', {
+          auctionId: id,
+          status: 'ACTIVE',
+        });
+        console.log(`⚡ Phiên ${id} đã chính thức bắt đầu!`);
+      }
+    }
+
+    // Nếu có phiên vừa kết thúc
+    for (const auction of result.completedAuctions) {
+      // Bắn tin nhắn vào phòng riêng của phiên đó
+      this.server.to(`auction_${auction.id}`).emit('auctionFinished', {
+        auctionId: auction.id,
+        winnerId: auction.currentWinnerId,
+        finalPrice: auction.currentPrice,
+      });
+
+      console.log(
+        `🏁 Phiên ${auction.id} đã kết thúc. Winner: ${auction.currentWinnerId}`,
+      );
     }
   }
 }

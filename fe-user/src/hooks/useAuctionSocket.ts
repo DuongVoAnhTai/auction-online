@@ -8,12 +8,14 @@ export const useAuctionSocket = (
   initialPrice: number,
   initialEndTime: string,
   initialBids: any[] = [],
+  initialStatus: string,
 ) => {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number>(initialPrice);
   const [bidHistory, setBidHistory] = useState<any[]>(initialBids);
   const [endTime, setEndTime] = useState<string>(initialEndTime);
+  const [status, setStatus] = useState(initialStatus);
 
   useEffect(() => {
     const token = Cookies.get("access_token");
@@ -61,6 +63,32 @@ export const useAuctionSocket = (
       toast.error(error.message || "Có lỗi xảy ra khi đặt giá");
     });
 
+    // Lắng nghe thông báo toàn hệ thống
+    socket.on("globalUpdate", (data: { message: string }) => {
+      toast.info("Thông báo hệ thống", {
+        description: data.message,
+        duration: 5000,
+      });
+    });
+
+    // Phiên đấu giá bắt đầu
+    socket.on("auctionStarted", (data: { status: string }) => {
+      setStatus("ACTIVE");
+      toast.success("Phiên đấu giá đã bắt đầu!", {
+        description: "Bây giờ bạn có thể tham gia đặt giá.",
+      });
+    });
+
+    // Phiên đấu giá kết thúc
+    socket.on("auctionFinished", (data) => {
+      setStatus("COMPLETED");
+      toast.success("Phiên đấu giá đã kết thúc!", {
+        description: data.winnerId
+          ? "Đã tìm thấy người thắng cuộc."
+          : "Không có người tham gia trả giá.",
+      });
+    });
+
     // 5. Cleanup khi unmount
     return () => {
       socket.emit("leaveAuction", auctionId);
@@ -81,6 +109,6 @@ export const useAuctionSocket = (
     currentPrice,
     bidHistory,
     placeBid,
-    setBidHistory,
+    status,
   };
 };

@@ -14,115 +14,130 @@ import { BidHistory } from "./BidHistory";
 
 export function BiddingPanel({ auction }: { auction: any }) {
   const { user } = useAuth();
-  const [timeLeft, setTimeLeft] = useState("");
+  const [timeLeft, setTimeLeft] = useState({
+    text: "",
+    label: "",
+    isUrgent: false,
+    isEnded: false,
+    isPending: false,
+  });
   const [bidAmount, setBidAmount] = useState<number>(0);
   const pathname = usePathname();
 
-  const { currentPrice, endTime, placeBid, bidHistory } = useAuctionSocket(
-    auction.id,
-    Number(auction.currentPrice),
-    auction.endTime,
-    auction.bids || [],
-  );
+  const { currentPrice, endTime, placeBid, bidHistory, status } =
+    useAuctionSocket(
+      auction.id,
+      Number(auction.currentPrice),
+      auction.endTime,
+      auction.bids || [],
+      auction.status,
+    );
 
   // Mức giá tối thiểu người dùng phải trả
   const minNextBid = currentPrice + Number(auction.bidIncrement);
 
-  // 2. Sử dụng useRef để giữ kết nối socket không bị khởi tạo lại khi re-render
-  // const socketRef = useRef<Socket | null>(null);
-
-  // useEffect(() => {
-  //   // 3. Khởi tạo kết nối tới namespace 'auctions'
-  //   socketRef.current = io("http://localhost:8080/auctions", {
-  //     withCredentials: true,
-  //   });
-
-  //   const socket = socketRef.current;
-
-  //   // 4. Lắng nghe sự kiện khi kết nối thành công
-  //   socket.on("connect", () => {
-  //     console.log("✅ Đã kết nối tới WebSocket Server. ID:", socket.id);
-
-  //     // 5. Gửi tín hiệu 'joinAuction' để vào phòng riêng của sản phẩm này
-  //     socket.emit("joinAuction", auction.id);
-  //   });
-
-  //   // 6. Lắng nghe phản hồi từ server (nếu cần)
-  //   socket.on("joined", (data) => {
-  //     console.log(`🏠 Đã vào phòng đấu giá: auction_${data}`);
-  //   });
-
-  //   // --- PHẦN LOGIC ĐẾM NGƯỢC ---
-  //   setBidAmount(minNextBid); // Gợi ý sẵn mức giá tối thiểu
-
-  //   const timer = setInterval(() => {
-  //     const now = new Date().getTime();
-  //     const end = new Date(auction.endTime).getTime();
-  //     const diff = end - now;
-
-  //     if (diff <= 0) {
-  //       setTimeLeft("Đã kết thúc");
-  //       clearInterval(timer);
-  //       return;
-  //     }
-
-  //     const h = Math.floor(diff / (1000 * 60 * 60));
-  //     const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  //     const s = Math.floor((diff % (1000 * 60)) / 1000);
-  //     setTimeLeft(`${h}h ${m}m ${s}s`);
-  //   }, 1000);
-
-  //   // --- CLEANUP: QUAN TRỌNG ---
-  //   return () => {
-  //     console.log("🔌 Đang ngắt kết nối socket...");
-  //     socket.emit("leaveAuction", auction.id); // Báo cho server biết mình rời phòng
-  //     socket.disconnect(); // Ngắt kết nối hẳn
-  //     clearInterval(timer);
-  //   };
-  // }, [auction.id]);
-
   useEffect(() => {
     setBidAmount(minNextBid); // Gợi ý sẵn mức giá tối thiểu
+  }, [minNextBid]);
 
-    const timer = setInterval(() => {
+  useEffect(() => {
+    const calculateTime = () => {
       const now = new Date().getTime();
+      const start = new Date(auction.startTime).getTime();
       const end = new Date(endTime).getTime();
-      const diff = end - now;
+
+      let targetDate: number;
+      let label: string;
+      let isPending = false;
+
+      if (status === "PENDING" || now < start) {
+        targetDate = start;
+        label = "Bắt đầu sau";
+        isPending = true;
+      } else if (status === "ACTIVE" && now < end) {
+        targetDate = end;
+        label = "Kết thúc sau";
+        isPending = false;
+      } else {
+        return {
+          text: "Đã kết thúc",
+          label: "",
+          isUrgent: false,
+          isEnded: true,
+          isPending: false,
+        };
+      }
+
+      const diff = targetDate - now;
 
       if (diff <= 0) {
-        setTimeLeft("Đã kết thúc");
-        clearInterval(timer);
-        return;
+        return {
+          text: "Đang xử lý...",
+          label: "",
+          isUrgent: false,
+          isEnded: false,
+          isPending: false,
+        };
       }
 
       const h = Math.floor(diff / (1000 * 60 * 60));
       const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const s = Math.floor((diff % (1000 * 60)) / 1000);
-      setTimeLeft(`${h}h ${m}m ${s}s`);
-    }, 1000);
 
+      const text = `${h}h ${m}m ${s}s`;
+      const isUrgent = !isPending && diff < 5 * 60 * 1000;
+
+      return { text, label, isUrgent, isEnded: false, isPending };
+    };
+
+    setTimeLeft(calculateTime());
+    const timer = setInterval(() => setTimeLeft(calculateTime()), 1000);
     return () => clearInterval(timer);
-  }, [endTime, currentPrice]);
+  }, [endTime, status, auction.startTime]);
 
   const handleQuickBid = (amount: number) => {
     const newAmount = currentPrice + amount;
     setBidAmount(newAmount);
-    // placeBid(newAmount);
+  };
+
+  // Xác định màu nền
+  const getHeaderBgColor = () => {
+    if (status === "COMPLETED" || timeLeft.isEnded) return "bg-gray-600";
+    if (status === "PENDING" || timeLeft.isPending) return "bg-emerald-600";
+    if (timeLeft.isUrgent) return "bg-red-600 animate-pulse";
+    return "bg-primary"; // Mặc định cho ACTIVE
   };
 
   return (
     <Card className="border-2 border-primary/20 shadow-xl overflow-hidden">
-      <div className="bg-primary p-4 text-primary-foreground">
+      <div
+        className={`${getHeaderBgColor()} p-4 text-primary-foreground transition-colors`}
+      >
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            <span className="font-mono text-xl font-bold">{timeLeft}</span>
+          <div className="flex items-center gap-3">
+            <Clock
+              className={`h-5 w-5 ${timeLeft.isUrgent ? "animate-pulse" : ""}`}
+            />
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase opacity-80 leading-none">
+                {timeLeft.label}
+              </span>
+              <span className="font-mono text-xl font-bold">
+                {timeLeft.text}
+              </span>
+            </div>
           </div>
           <Badge
             variant="secondary"
-            className={timeLeft === "Đã kết thúc" ? "" : "animate-pulse"}
+            className={
+              status === "ACTIVE" ? "animate-pulse bg-white text-primary" : ""
+            }
           >
-            {timeLeft === "Đã kết thúc" ? "Đã kết thúc" : "Đang diễn ra"}
+            {status === "ACTIVE"
+              ? "Đang diễn ra"
+              : status === "PENDING"
+                ? "Sắp diễn ra"
+                : "Đã kết thúc"}
           </Badge>
         </div>
       </div>
@@ -156,6 +171,14 @@ export function BiddingPanel({ auction }: { auction: any }) {
             <AlertCircle className="h-4 w-4" />
             Bạn không thể tự trả giá sản phẩm của chính mình
           </div>
+        ) : status === "COMPLETED" ? (
+          <div className="bg-gray-100 p-4 rounded-lg text-center font-bold text-gray-600">
+            PHIÊN ĐẤU GIÁ ĐÃ KẾT THÚC
+          </div>
+        ) : status === "PENDING" ? (
+          <div className="bg-emerald-50 p-4 rounded-lg text-center font-bold text-emerald-600 border border-emerald-100">
+            PHIÊN ĐẤU GIÁ CHƯA BẮT ĐẦU
+          </div>
         ) : (
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-2">
@@ -188,10 +211,10 @@ export function BiddingPanel({ auction }: { auction: any }) {
 
             <Button
               className="w-full h-12 text-lg font-bold"
-              disabled={bidAmount < minNextBid || timeLeft === "Đã kết thúc"}
+              disabled={bidAmount < minNextBid || timeLeft.isEnded}
               onClick={() => placeBid(bidAmount)}
             >
-              {timeLeft === "Đã kết thúc" ? "PHIÊN ĐÃ ĐÓNG" : "ĐẶT GIÁ NGAY"}
+              {timeLeft.isEnded ? "PHIÊN ĐÃ ĐÓNG" : "ĐẶT GIÁ NGAY"}
             </Button>
           </div>
         )}

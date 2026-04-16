@@ -32,11 +32,13 @@ import {
 } from "@/components/ui/sheet";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { usePathname } from "next/navigation";
 
 export function Header() {
   const { user, logout } = useAuth();
   const [time, setTime] = useState(new Date());
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
 
   // Cập nhật đồng hồ mỗi giây
   useEffect(() => {
@@ -198,7 +200,7 @@ export function Header() {
                 asChild
                 className="text-xs md:text-sm"
               >
-                <Link href="/login">Đăng nhập</Link>
+                <Link href={`/login?redirect=${pathname}`}>Đăng nhập</Link>
               </Button>
               <Button size="sm" asChild className="text-xs md:text-sm">
                 <Link href="/signup">Đăng ký</Link>

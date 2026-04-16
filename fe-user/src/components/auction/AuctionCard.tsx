@@ -78,6 +78,8 @@ export function AuctionCard({ auction }: { auction: any }) {
       return { text, label, isUrgent, isEnded: false, isPending };
     };
 
+    // Cập nhật ngay lập tức
+    setTimeLeft(calculateTime());
     const timer = setInterval(() => setTimeLeft(calculateTime()), 1000);
     return () => clearInterval(timer);
   }, [auction.startTime, auction.endTime, auction.status]);

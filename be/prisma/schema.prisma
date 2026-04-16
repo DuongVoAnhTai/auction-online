@@ -113,6 +113,7 @@ model Auction {
   productId        String
   startingPrice    Decimal       @db.Decimal(15, 2)
   currentPrice     Decimal       @db.Decimal(15, 2)
+  // Field quan trọng để xử lý tranh chấp (Optimistic Locking)
   version          Int           @default(0)
   bidIncrement     Decimal       @db.Decimal(15, 2)
   startTime        DateTime
@@ -122,12 +123,12 @@ model Auction {
   sniperProtection Boolean       @default(true)
 
   product          Product       @relation(fields: [productId], references: [id])
-  // Field quan trọng để xử lý tranh chấp (Optimistic Locking)
   currentWinner    User?         @relation("AuctionWinner", fields: [currentWinnerId], references: [id])
   bids             Bid[]
   bidLogs          BidLog[]
 
   @@map("auctions")
+  @@index([status, startTime, endTime])
 }
 
 model Bid {

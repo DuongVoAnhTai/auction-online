@@ -170,4 +170,49 @@ export class AuctionsService {
       throw error;
     }
   }
+
+  async updateAuctionStatuses() {
+    const now = new Date();
+
+    // 1. Chuyển PENDING -> ACTIVE
+    const pendingAuctions = await this.prisma.auction.findMany({
+      where: {
+        status: 'PENDING',
+        startTime: { lte: now },
+      },
+      select: { id: true },
+    });
+
+    const activatedIds = pendingAuctions.map((a) => a.id);
+
+    if (activatedIds.length > 0) {
+      await this.prisma.auction.updateMany({
+        where: { id: { in: activatedIds } },
+        data: { status: 'ACTIVE' },
+      });
+    }
+
+    // 2. Chuyển ACTIVE -> COMPLETED
+    const expiredAuctions = await this.prisma.auction.findMany({
+      where: {
+        status: 'ACTIVE',
+        endTime: { lte: now },
+      },
+      select: { id: true, currentWinnerId: true, currentPrice: true },
+    });
+
+    if (expiredAuctions.length > 0) {
+      const expiredIds = expiredAuctions.map((a) => a.id);
+      await this.prisma.auction.updateMany({
+        where: { id: { in: expiredIds } },
+        data: { status: 'COMPLETED' },
+      });
+    }
+
+    return {
+      activatedCount: activatedIds.length,
+      activatedIds,
+      completedAuctions: expiredAuctions,
+    };
+  }
 }
