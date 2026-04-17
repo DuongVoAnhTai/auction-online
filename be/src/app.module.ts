@@ -12,6 +12,7 @@ import { AuctionsService } from './auctions/auctions.service';
 import { AuctionsController } from './auctions/auctions.controller';
 import { CategoriesModule } from './categories/categories.module';
 import { AuctionsModule } from './auctions/auctions.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AuctionsModule } from './auctions/auctions.module';
     CategoriesModule,
     AuctionsModule,
     ScheduleModule.forRoot(),
+    NotificationsModule,
   ],
   controllers: [AppController, AuctionsController],
   providers: [AppService, MailService, CloudinaryService, AuctionsService],

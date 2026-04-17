@@ -11,4 +11,8 @@ interface AuthContextType {
   setUser: (user: User | null) => void;
   logout: () => void;
   isLoading: boolean;
+  unreadCount: number;
+  setUnreadCount: (value: number | ((prev: number) => number)) => void;
+  notifications: Notification[];
+  handleMarkAllRead: () => void;
 }

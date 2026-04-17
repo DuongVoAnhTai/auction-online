@@ -4,11 +4,15 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
+import { NotificationsGateway } from 'src/notifications/notifications.gateway';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class AuctionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsGateway: NotificationsGateway,
+  ) {}
 
   async findAll(
     query: {
@@ -131,6 +135,28 @@ export class AuctionsService {
     if (amount < minNextBid) {
       throw new BadRequestException(
         `Số tiền phải lớn hơn hoặc bằng ${minNextBid.toLocaleString()}đ`,
+      );
+    }
+
+    if (auction.currentWinnerId && auction.currentWinnerId !== userId) {
+      const previousWinnerId = auction.currentWinnerId;
+      const notifData = {
+        title: 'Bạn đã bị vượt giá!',
+        content: `Sản phẩm ${auction.product.name} vừa có người trả giá ${amount.toLocaleString()}đ.`,
+        link: `/auctions/${auctionId}`,
+        type: 'OUTBID',
+      };
+
+      // 1. Lưu vào Database để xem lại sau
+      await this.prisma.notification.create({
+        data: { userId: previousWinnerId, ...notifData },
+      } as any);
+
+      // 2. Bắn Socket Real-time ngay lập tức
+      this.notificationsGateway.sendToUser(
+        previousWinnerId,
+        'newNotification',
+        notifData,
       );
     }
 
