@@ -14,35 +14,65 @@ export class AuctionsService {
     query: {
       status?: string;
       limit?: number;
+      page?: number;
       categoryId?: string;
       minPrice?: number;
       maxPrice?: number;
       sort?: string;
     } = {},
   ) {
-    const { status, categoryId, limit, minPrice, maxPrice, sort } = query;
+    const {
+      status,
+      categoryId,
+      limit = 12,
+      page = 1,
+      minPrice,
+      maxPrice,
+      sort,
+    } = query;
 
-    return this.prisma.auction.findMany({
-      where: {
-        status: status as any,
-        ...(categoryId && { product: { categoryId } }),
-        // Lọc theo giá hiện tại
-        currentPrice: {
-          gte: minPrice ? Number(minPrice) : undefined,
-          lte: maxPrice ? Number(maxPrice) : undefined,
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const where = {
+      status: status as any,
+      ...(categoryId && { product: { categoryId } }),
+      currentPrice: {
+        gte: minPrice ? Number(minPrice) : undefined,
+        lte: maxPrice ? Number(maxPrice) : undefined,
+      },
+    };
+
+    // 3. Gọi song song: Lấy dữ liệu và Đếm tổng số bản ghi
+    const [totalItems, auctions] = await Promise.all([
+      this.prisma.auction.count({ where }), // Đếm tổng để tính tổng số trang
+      this.prisma.auction.findMany({
+        where,
+        skip: skip,
+        take: Number(limit),
+        include: {
+          product: { include: { category: true } },
         },
+        orderBy: {
+          ...(sort === 'price_asc' && { currentPrice: 'asc' }),
+          ...(sort === 'price_desc' && { currentPrice: 'desc' }),
+          ...(sort === 'ending_soon' && { endTime: 'asc' }),
+          ...(!sort && { startTime: 'desc' }),
+        },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / limit);
+
+    return {
+      data: auctions,
+      meta: {
+        totalItems,
+        itemCount: auctions.length,
+        itemsPerPage: Number(limit),
+        totalPages,
+        currentPage: Number(page),
       },
-      take: limit ? Number(limit) : undefined,
-      include: {
-        product: { include: { category: true } },
-      },
-      orderBy: {
-        ...(sort === 'price_asc' && { currentPrice: 'asc' }),
-        ...(sort === 'price_desc' && { currentPrice: 'desc' }),
-        ...(sort === 'ending_soon' && { endTime: 'asc' }),
-        ...(!sort && { startTime: 'desc' }),
-      },
-    });
+    };
   }
 
   async findOne(id: string) {

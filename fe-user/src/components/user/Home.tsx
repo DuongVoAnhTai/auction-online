@@ -4,13 +4,13 @@ import Link from "next/link";
 
 export default async function Home() {
   // Lấy 4 cái sắp kết thúc
-  const endingSoon = await getAuctions({
+  const { data: endingSoon } = await getAuctions({
     status: "ACTIVE",
     limit: 4,
     sort: "ending_soon",
   });
   // Lấy 4 cái mới nhất
-  const latest = await getAuctions({ status: "ACTIVE", limit: 4 });
+  const { data: latest } = await getAuctions({ status: "ACTIVE", limit: 4 });
 
   return (
     <div className="space-y-10">

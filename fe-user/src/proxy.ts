@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const token = request.cookies.get("access_token")?.value;
   const { pathname } = request.nextUrl;
 
@@ -19,7 +19,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Cấu hình Middleware chạy cho những đường dẫn này
+// Cấu hình Proxy chạy cho những đường dẫn này
 export const config = {
   matcher: ["/login", "/signup", "/profile/:path*", "/auctions/:path*"],
 };

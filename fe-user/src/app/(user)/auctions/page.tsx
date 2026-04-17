@@ -2,6 +2,7 @@ import { getAuctions, getCategories } from "@/services/auctionServices";
 import { AuctionCard } from "@/components/auction/AuctionCard";
 import { AuctionFilter } from "@/components/auction/AuctionFilter";
 import { SortSelect } from "@/components/auction/SortSelect";
+import { AuctionPagination } from "@/components/auction/AuctionPagination";
 
 export const metadata = { title: "Danh sách sản phẩm - Hệ thống đấu giá" };
 
@@ -14,23 +15,27 @@ export default async function AuctionsPage(props: {
 
   const status = forcedStatus || (searchParams.status as string) || "ACTIVE";
   const sort = (searchParams.sort as string) || "newest";
+  const page = Number(searchParams.page) || 1;
+
   const filters = {
-    status: status,
-    sort: sort,
+    status,
+    page,
+    limit: 12,
+    sort,
     categoryId: searchParams.categoryId,
     minPrice: searchParams.minPrice,
     maxPrice: searchParams.maxPrice,
   };
 
-  const [auctions, categories] = await Promise.all([
+  const [{ data: auctions, meta }, categories] = await Promise.all([
     getAuctions(filters),
     getCategories(),
   ]);
 
   return (
-    <div className="flex flex-col md:flex-row gap-8 py-8">
+    <div className="flex flex-col lg:flex-row gap-8 py-8">
       {/* Sidebar bên trái - Ẩn trên mobile hoặc dùng Sheet */}
-      <aside className="hidden md:block w-64 shrink-0">
+      <aside className="hidden lg:block w-64 shrink-0">
         <AuctionFilter categories={categories} currentStatus={status} />
       </aside>
 
@@ -59,11 +64,18 @@ export default async function AuctionsPage(props: {
 
         {/* Grid sản phẩm */}
         {auctions.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {auctions.map((auction: any) => (
-              <AuctionCard key={auction.id} auction={auction} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {auctions.map((auction: any) => (
+                <AuctionCard key={auction.id} auction={auction} />
+              ))}
+            </div>
+
+            <AuctionPagination
+              currentPage={meta.currentPage}
+              totalPages={meta.totalPages}
+            />
+          </>
         ) : (
           <div className="h-64 flex items-center justify-center border-2 border-dashed rounded-xl">
             <p className="text-muted-foreground">
