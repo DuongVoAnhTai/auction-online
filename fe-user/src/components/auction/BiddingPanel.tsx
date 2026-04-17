@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Clock, TrendingUp, AlertCircle } from "lucide-react";
 import { useAuctionSocket } from "@/hooks/useAuctionSocket";
 import { BidHistory } from "./BidHistory";
+import { formatNumber, parseNumber } from "@/utils/format";
 
 export function BiddingPanel({ auction }: { auction: any }) {
   const { user } = useAuth();
@@ -21,6 +22,8 @@ export function BiddingPanel({ auction }: { auction: any }) {
     isEnded: false,
     isPending: false,
   });
+  // State hiển thị trên ô input (dạng chuỗi "1.000.000")
+  const [displayAmount, setDisplayAmount] = useState("");
   const [bidAmount, setBidAmount] = useState<number>(0);
   const pathname = usePathname();
 
@@ -37,7 +40,9 @@ export function BiddingPanel({ auction }: { auction: any }) {
   const minNextBid = currentPrice + Number(auction.bidIncrement);
 
   useEffect(() => {
-    setBidAmount(minNextBid); // Gợi ý sẵn mức giá tối thiểu
+    const initialBid = Math.floor(minNextBid);
+    setBidAmount(initialBid);
+    setDisplayAmount(formatNumber(initialBid));
   }, [minNextBid]);
 
   useEffect(() => {
@@ -95,9 +100,23 @@ export function BiddingPanel({ auction }: { auction: any }) {
     return () => clearInterval(timer);
   }, [endTime, status, auction.startTime]);
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+
+    // 1. Chuyển chuỗi người dùng nhập về số thuần túy
+    const numericValue = parseNumber(rawValue);
+
+    // 2. Cập nhật state thực tế (để kiểm tra logic bidAmount < minNextBid)
+    setBidAmount(numericValue);
+
+    // 3. Cập nhật state hiển thị (format lại ngay lập tức)
+    setDisplayAmount(formatNumber(numericValue));
+  };
+
   const handleQuickBid = (amount: number) => {
     const newAmount = currentPrice + amount;
     setBidAmount(newAmount);
+    setDisplayAmount(formatNumber(newAmount));
   };
 
   // Xác định màu nền
@@ -150,7 +169,7 @@ export function BiddingPanel({ auction }: { auction: any }) {
               Giá cao nhất hiện tại
             </p>
             <p className="text-3xl font-extrabold text-primary">
-              {currentPrice.toLocaleString()}đ
+              {formatNumber(currentPrice)}đ
             </p>
           </div>
           <TrendingUp className="h-8 w-8 text-emerald-500" />
@@ -189,23 +208,25 @@ export function BiddingPanel({ auction }: { auction: any }) {
                   size="sm"
                   onClick={() => handleQuickBid(val)}
                 >
-                  +{val.toLocaleString()}
+                  +{formatNumber(val)}
                 </Button>
               ))}
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Số tiền của bạn (đ)</label>
+              <label className="text-sm font-medium">
+                Số tiền của bạn (VNĐ)
+              </label>
               <Input
-                type="number"
-                value={bidAmount}
-                onChange={(e) => setBidAmount(Number(e.target.value))}
+                type="text"
+                value={displayAmount}
+                onChange={handleInputChange}
                 className="text-lg font-bold"
-                min={minNextBid}
+                // min={minNextBid}
               />
               <p className="text-[10px] text-muted-foreground italic">
-                * Phải trả ít nhất {minNextBid.toLocaleString()}đ (Giá hiện tại
-                + bước giá)
+                * Phải trả ít nhất{" "}
+                <span className="font-bold">{formatNumber(minNextBid)}đ</span>
               </p>
             </div>
 
