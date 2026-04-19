@@ -10,6 +10,11 @@ export class AuctionsController {
     return this.auctionsService.findAll(query);
   }
 
+  @Get('suggestions')
+  async getSuggestions(@Query('search') search: string) {
+    return this.auctionsService.getSuggestions(search);
+  }
+
   @Get(':id')
   async getAuctionDetail(@Param('id') id: string) {
     return this.auctionsService.findOne(id);

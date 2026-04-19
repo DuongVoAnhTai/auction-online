@@ -15,7 +15,7 @@ export function Footer() {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Gavel className="h-6 w-6 text-primary" />
-              <span className="text-xl font -bold">T-Auction</span>
+              <span className="text-xl font-bold">T-Auction</span>
             </div>
             <p className="text-sm text-muted-foreground">
               Sàn đấu giá trực tuyến thời gian thực hàng đầu Việt Nam. Minh bạch

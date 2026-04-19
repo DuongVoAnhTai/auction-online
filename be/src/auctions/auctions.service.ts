@@ -23,6 +23,7 @@ export class AuctionsService {
       minPrice?: number;
       maxPrice?: number;
       sort?: string;
+      search?: string;
     } = {},
   ) {
     const {
@@ -33,6 +34,7 @@ export class AuctionsService {
       minPrice,
       maxPrice,
       sort,
+      search,
     } = query;
 
     const skip = (Number(page) - 1) * Number(limit);
@@ -40,6 +42,14 @@ export class AuctionsService {
     const where = {
       status: status as any,
       ...(categoryId && { product: { categoryId } }),
+      ...(search && {
+        product: {
+          name: {
+            contains: search,
+            mode: 'insensitive' as const, // Tìm kiếm không phân biệt hoa thường
+          },
+        },
+      }),
       currentPrice: {
         gte: minPrice ? Number(minPrice) : undefined,
         lte: maxPrice ? Number(maxPrice) : undefined,
@@ -99,6 +109,23 @@ export class AuctionsService {
             bidder: { select: { fullName: true, avatarUrl: true } },
           },
         },
+      },
+    });
+  }
+
+  async getSuggestions(search: string) {
+
+    if (!search) return [];
+    return this.prisma.auction.findMany({
+      where: {
+        status: 'ACTIVE',
+        product: {
+          name: { contains: search, mode: 'insensitive' },
+        },
+      },
+      take: 5, // Chỉ lấy 5 kết quả gợi ý nhanh
+      include: {
+        product: { select: { name: true, images: true } },
       },
     });
   }

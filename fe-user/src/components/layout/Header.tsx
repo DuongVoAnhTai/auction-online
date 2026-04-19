@@ -34,6 +34,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { usePathname } from "next/navigation";
+import { SearchBar } from "./SearchBar";
 
 export function Header() {
   const { user, logout, unreadCount, handleMarkAllRead, notifications } =
@@ -109,14 +110,7 @@ export function Header() {
 
         {/* --- MIDDLE: SEARCH (Ẩn trên mobile nhỏ, hiện từ tablet) --- */}
         <div className="hidden sm:flex flex-1 items-center justify-center px-4">
-          <div className="relative w-full max-w-[300px] lg:max-w-sm">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Tìm kiếm..."
-              className="pl-8 h-9"
-            />
-          </div>
+          <SearchBar />
         </div>
 
         {/* --- RIGHT SIDE: CLOCK & USER --- */}

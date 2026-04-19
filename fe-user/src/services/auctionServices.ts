@@ -10,6 +10,17 @@ export const getAuctions = async (query: any) => {
   }
 };
 
+export const getSearchSuggestions = async (search: string) => {
+  try {
+    const res = await httpRequest.get(`auctions/suggestions`, {
+      params: { search },
+    });
+    return res;
+  } catch (error) {
+    return [];
+  }
+};
+
 export const getCategories = async () => {
   try {
     const res = await httpRequest.get("categories");

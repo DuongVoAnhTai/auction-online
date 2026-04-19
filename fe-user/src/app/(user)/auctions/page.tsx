@@ -22,6 +22,7 @@ export default async function AuctionsPage(props: {
     page,
     limit: 12,
     sort,
+    search: searchParams.search,
     categoryId: searchParams.categoryId,
     minPrice: searchParams.minPrice,
     maxPrice: searchParams.maxPrice,
