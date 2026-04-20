@@ -1,14 +1,28 @@
-import { SecurityTab } from "@/components/profile/SecurityTab";
+"use client";
+
+import { SecurityTab } from "@/components/user/profile/SecurityTab";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Gavel, ShieldCheck, User } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { Gavel, Package, ShieldCheck, User } from "lucide-react";
+import { AccountTab } from "@/components/user/profile/AccountTab";
+import { BidsTab } from "@/components/user/profile/BidsTab";
 
 export default function ProfilePage() {
+  const { user } = useAuth();
+
+  if (!user)
+    return <div className="p-20 text-center">Vui lòng đăng nhập...</div>;
+
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-3xl font-bold mb-8">Cài đặt tài khoản</h1>
 
-      <Tabs defaultValue="account" className="flex flex-col md:flex-row gap-8">
+      <Tabs
+        defaultValue="account"
+        orientation="vertical"
+        className="flex flex-col md:flex-row gap-8"
+      >
         {/* Sidebar Tabs */}
         <TabsList className="flex flex-col h-auto bg-transparent space-y-2 w-full md:w-64">
           <TabsTrigger
@@ -29,7 +43,14 @@ export default function ProfilePage() {
           >
             <ShieldCheck className="h-4 w-4" /> Bảo mật & 2FA
           </TabsTrigger>
-          {/* Hiện thêm tab My Auctions nếu là Seller */}
+          {user.role === "SELLER" && (
+            <TabsTrigger
+              value="auctions"
+              className="w-full justify-start gap-3 px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              <Package className="h-4 w-4" /> Sản phẩm đã đăng
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Nội dung chi tiết */}
@@ -39,7 +60,9 @@ export default function ProfilePage() {
               <CardHeader>
                 <CardTitle>Hồ sơ cá nhân</CardTitle>
               </CardHeader>
-              <CardContent>{/* Form cập nhật tên, avatar... */}</CardContent>
+              <CardContent>
+                <AccountTab />
+              </CardContent>
             </Card>
           </TabsContent>
 
@@ -49,7 +72,7 @@ export default function ProfilePage() {
                 <CardTitle>Lịch sử tham gia đấu giá</CardTitle>
               </CardHeader>
               <CardContent>
-                {/* Bảng danh sách hoặc Grid sản phẩm đang bid */}
+                <BidsTab />
               </CardContent>
             </Card>
           </TabsContent>
