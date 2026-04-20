@@ -1,5 +1,6 @@
 import { Toaster } from "sonner";
 import "./globals.css";
+import { AuthProvider } from "@/context/AuthContext";
 
 export default function RootLayout({
   children,
@@ -9,7 +10,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <main>{children}</main>
+        <AuthProvider>
+          <main>{children}</main>
+        </AuthProvider>
         <Toaster position="top-right" richColors />
       </body>
     </html>

@@ -4,6 +4,7 @@ interface User {
   fullName: string;
   avatarUrl: string;
   role: string;
+  is2faEnabled: boolean;
 }
 
 interface AuthContextType {

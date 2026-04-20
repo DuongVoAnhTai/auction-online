@@ -61,3 +61,23 @@ export const resetPassword = async (otp: string, newPassword: string) => {
     };
   }
 };
+
+export const generate2FA = async () => {
+  return await httpRequest.post("auth/2fa/generate");
+};
+
+export const turnOn2FA = async (otp: string, secret: string) => {
+  return await httpRequest.post("auth/2fa/turn-on", { otp, secret });
+};
+
+export const turnOff2FA = async () => {
+  return await httpRequest.post("auth/2fa/turn-off");
+};
+
+export const loginWith2FA = async (userId: string, otp: string) => {
+  try {
+    return await httpRequest.post("auth/2fa/authenticate", { userId, otp });
+  } catch (error: any) {
+    return { error: "Mã OTP không chính xác" };
+  }
+};
