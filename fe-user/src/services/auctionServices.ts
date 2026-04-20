@@ -40,3 +40,12 @@ export const getAuctionDetail = async (id: string) => {
     return null;
   }
 };
+
+export const getMyAuctions = async () => {
+  try {
+    return await httpRequest.get("auctions/my-auctions");
+  } catch (error) {
+    console.error("Lỗi lấy danh sách sản phẩm đã đăng:", error);
+    return [];
+  }
+};

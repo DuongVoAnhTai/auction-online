@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Gavel, Package, ShieldCheck, User } from "lucide-react";
 import { AccountTab } from "@/components/user/profile/AccountTab";
 import { BidsTab } from "@/components/user/profile/BidsTab";
+import { MyAuctionsTab } from "@/components/user/profile/MyAuctionsTab";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -84,6 +85,14 @@ export default function ProfilePage() {
               </CardHeader>
               <CardContent>
                 <SecurityTab />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="auctions" className="mt-0">
+            <Card>
+              <CardContent className="pt-6">
+                <MyAuctionsTab />
               </CardContent>
             </Card>
           </TabsContent>

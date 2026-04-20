@@ -1,5 +1,6 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { AuctionsService } from './auctions.service';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @Controller('auctions')
 export class AuctionsController {
@@ -13,6 +14,12 @@ export class AuctionsController {
   @Get('suggestions')
   async getSuggestions(@Query('search') search: string) {
     return this.auctionsService.getSuggestions(search);
+  }
+
+  @Get('my-auctions')
+  @UseGuards(JwtAuthGuard)
+  async getMyAuctions(@Req() req) {
+    return this.auctionsService.findBySeller(req.user.sub);
   }
 
   @Get(':id')

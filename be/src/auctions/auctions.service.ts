@@ -114,7 +114,6 @@ export class AuctionsService {
   }
 
   async getSuggestions(search: string) {
-
     if (!search) return [];
     return this.prisma.auction.findMany({
       where: {
@@ -297,5 +296,25 @@ export class AuctionsService {
       activatedIds,
       completedAuctions: expiredAuctions,
     };
+  }
+
+  async findBySeller(userId: string) {
+    return this.prisma.auction.findMany({
+      where: {
+        product: {
+          sellerId: userId,
+        },
+      },
+      include: {
+        product: {
+          include: {
+            category: true,
+          },
+        },
+      },
+      orderBy: {
+        startTime: 'desc',
+      },
+    });
   }
 }
