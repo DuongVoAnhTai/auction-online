@@ -28,6 +28,7 @@ enum AuctionStatus {
   ACTIVE
   COMPLETED
   CANCELLED
+  REJECTED
 }
 
 enum BidStatus {

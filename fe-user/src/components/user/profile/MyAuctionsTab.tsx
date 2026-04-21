@@ -5,8 +5,33 @@ import { getMyAuctions } from "@/services/auctionServices";
 import { formatNumber } from "@/utils/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, ExternalLink, MoreVertical } from "lucide-react";
+import {
+  PlusCircle,
+  ExternalLink,
+  MoreVertical,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import * as auctionServices from "@/services/auctionServices";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export function MyAuctionsTab() {
   const [auctions, setAuctions] = useState<any[]>([]);
@@ -37,6 +62,17 @@ export function MyAuctionsTab() {
         return <Badge variant="destructive">Đã hủy</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    const res = await auctionServices.deleteAuction(id);
+    if (res.error) {
+      toast.error(res.error);
+    } else {
+      toast.success("Đã xóa bài đăng thành công");
+      // Load lại danh sách sau khi xóa
+      setAuctions((prev) => prev.filter((item) => item.id !== id));
     }
   };
 
@@ -112,9 +148,60 @@ export function MyAuctionsTab() {
                           <ExternalLink className="h-4 w-4" />
                         </Link>
                       </Button>
-                      <Button variant="ghost" size="icon" title="Thêm">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href={`/auction/edit/${item.id}`}
+                              className="flex items-center cursor-pointer"
+                            >
+                              <Pencil className="mr-2 h-4 w-4" /> Chỉnh sửa
+                            </Link>
+                          </DropdownMenuItem>
+
+                          {/* Nút xóa chỉ hiện nếu status là PENDING/REJECTED */}
+                          {(item.status === "PENDING" ||
+                            item.status === "REJECTED") && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Bạn có chắc chắn muốn xóa?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Hành động này không thể hoàn tác. Sản phẩm "
+                                    {item.product.name}" sẽ bị xóa vĩnh viễn
+                                    khỏi hệ thống.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className="bg-red-600 hover:bg-red-700"
+                                    onClick={() => handleDelete(item.id)}
+                                  >
+                                    Xác nhận xóa
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </td>
                 </tr>

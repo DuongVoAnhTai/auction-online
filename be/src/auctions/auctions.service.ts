@@ -3,9 +3,11 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { NotificationsGateway } from 'src/notifications/notifications.gateway';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateAuctionDto } from './dto/create-auction.dto';
 
 @Injectable()
 export class AuctionsService {
@@ -315,6 +317,105 @@ export class AuctionsService {
       orderBy: {
         startTime: 'desc',
       },
+    });
+  }
+
+  async create(userId: string, data: CreateAuctionDto, imageUrls: string[]) {
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Tạo Sản phẩm trước
+      const product = await tx.product.create({
+        data: {
+          name: data.name,
+          description: data.description,
+          sellerId: userId,
+          categoryId: data.categoryId,
+          images: imageUrls, // Mảng URL từ Cloudinary
+        },
+      });
+
+      // 2. Tạo Phiên đấu giá gắn với sản phẩm đó
+      const auction = await tx.auction.create({
+        data: {
+          productId: product.id,
+          startingPrice: parseFloat(data.startingPrice),
+          currentPrice: parseFloat(data.startingPrice),
+          bidIncrement: parseFloat(data.bidIncrement),
+          startTime: new Date(data.startTime),
+          endTime: new Date(data.endTime),
+          status: 'PENDING', // Mặc định chờ duyệt
+        },
+      });
+
+      return auction;
+    });
+  }
+
+  async update(userId: string, auctionId: string, data: any) {
+    // 1. Tìm phiên đấu giá và kiểm tra quyền
+    const auction = await this.prisma.auction.findUnique({
+      where: { id: auctionId },
+      include: { product: true },
+    });
+
+    if (!auction) throw new NotFoundException('Không tìm thấy phiên đấu giá');
+    if (auction.product.sellerId !== userId)
+      throw new ForbiddenException('Bạn không có quyền sửa sản phẩm này');
+
+    // 2. Chặn sửa nếu phiên đã ACTIVE hoặc COMPLETED
+    if (auction.status !== 'PENDING' && auction.status !== 'REJECTED') {
+      throw new BadRequestException(
+        'Chỉ có thể sửa sản phẩm đang chờ duyệt hoặc bị từ chối',
+      );
+    }
+
+    // 3. Thực hiện cập nhật bằng Transaction
+    return this.prisma.$transaction(async (tx) => {
+      // Cập nhật bảng Auction và bảng Product lồng nhau
+      return tx.auction.update({
+        where: { id: auctionId },
+        data: {
+          startingPrice: parseFloat(data.startingPrice),
+          currentPrice: parseFloat(data.startingPrice), // Reset giá hiện tại bằng giá khởi điểm mới
+          bidIncrement: parseFloat(data.bidIncrement),
+          startTime: new Date(data.startTime),
+          endTime: new Date(data.endTime),
+          status: 'PENDING', // Sau khi sửa, chuyển về trạng thái chờ duyệt lại
+          product: {
+            update: {
+              name: data.name,
+              description: data.description,
+              categoryId: data.categoryId,
+              // ...(data.images && { images: data.images }),
+            },
+          },
+        },
+      });
+    });
+  }
+
+  async remove(userId: string, auctionId: string) {
+    // 1. Tìm và kiểm tra quyền sở hữu + trạng thái
+    const auction = await this.prisma.auction.findUnique({
+      where: { id: auctionId },
+      include: { product: true },
+    });
+
+    if (!auction) throw new NotFoundException('Không tìm thấy phiên đấu giá');
+    if (auction.product.sellerId !== userId)
+      throw new ForbiddenException('Bạn không có quyền xóa bài đăng này');
+
+    // 2. Chỉ cho phép xóa nếu chưa ACTIVE hoặc COMPLETED
+    if (auction.status !== 'PENDING' && auction.status !== 'REJECTED') {
+      throw new BadRequestException(
+        'Không thể xóa phiên đấu giá đang diễn ra hoặc đã kết thúc',
+      );
+    }
+
+    // 3. Thực hiện xóa (Dùng transaction để xóa cả 2 bảng)
+    return this.prisma.$transaction(async (tx) => {
+      await tx.auction.delete({ where: { id: auctionId } });
+      await tx.product.delete({ where: { id: auction.productId } });
+      return { message: 'Xóa bài đăng thành công' };
     });
   }
 }

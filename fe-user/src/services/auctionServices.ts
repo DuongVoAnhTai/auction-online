@@ -49,3 +49,31 @@ export const getMyAuctions = async () => {
     return [];
   }
 };
+
+export const createAuction = async (formData: FormData) => {
+  try {
+    const res = await httpRequest.post("auctions/create", formData);
+    return res;
+  } catch (error: any) {
+    return {
+      error: error.response?.data?.message || "Đăng sản phẩm thất bại",
+    };
+  }
+};
+
+export const updateAuction = async (id: string, data: any) => {
+  try {
+    const res = await httpRequest.patch(`auctions/${id}`, data);
+    return res;
+  } catch (error: any) {
+    return { error: error.response?.data?.message || "Cập nhật thất bại" };
+  }
+};
+
+export const deleteAuction = async (id: string) => {
+  try {
+    return await httpRequest.del(`auctions/${id}`);
+  } catch (error: any) {
+    return { error: error.response?.data?.message || "Xóa thất bại" };
+  }
+};
