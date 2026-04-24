@@ -84,4 +84,5 @@ export class AuctionsController {
   async getAuctionDetail(@Param('id') id: string) {
     return this.auctionsService.findOne(id);
   }
+  
 }

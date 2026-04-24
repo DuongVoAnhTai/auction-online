@@ -10,6 +10,7 @@ import {
   PlusCircle,
   Clock,
   Menu,
+  ShieldCheck,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -238,6 +239,19 @@ export function Header() {
                         <PlusCircle className="mr-2 h-4 w-4" /> Đăng sản phẩm
                       </Link>
                     </DropdownMenuItem>
+                  )}
+
+                  {user?.role === "ADMIN" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      className="border-primary text-primary hover:bg-primary/10"
+                    >
+                      <Link href="/admin">
+                        <ShieldCheck className="mr-2 h-4 w-4" /> Quản trị
+                      </Link>
+                    </Button>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem

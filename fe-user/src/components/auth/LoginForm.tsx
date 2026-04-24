@@ -19,11 +19,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { useState } from "react";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "../ui/input-otp";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "../ui/input-otp";
 import { useAuth } from "@/context/AuthContext";
 
 const loginSchema = z.object({
@@ -66,8 +62,12 @@ export function LoginForm() {
     setUser(result.user);
 
     // 4. Chuyển hướng
-    const destination = redirectUrl || "/";
-    router.push(destination);
+    if (result.user.role === "ADMIN") {
+      router.push("/admin");
+    } else {
+      router.push(redirectUrl || "/");
+    }
+
     router.refresh();
   };
 

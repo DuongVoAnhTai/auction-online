@@ -100,7 +100,12 @@ export class AuctionsService {
             category: true,
             seller: {
               // Lấy thông tin người bán
-              select: { fullName: true, avatarUrl: true, email: true },
+              select: {
+                fullName: true,
+                avatarUrl: true,
+                email: true,
+                createdAt: true,
+              },
             },
           },
         },
@@ -416,6 +421,39 @@ export class AuctionsService {
       await tx.auction.delete({ where: { id: auctionId } });
       await tx.product.delete({ where: { id: auction.productId } });
       return { message: 'Xóa bài đăng thành công' };
+    });
+  }
+
+  async updateStatus(
+    id: string,
+    status: 'ACTIVE' | 'REJECTED',
+    reason?: string,
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      const auction = await tx.auction.update({
+        where: { id },
+        data: { status },
+        include: { product: { include: { seller: true } } },
+      });
+
+      // Bắn thông báo cho người bán
+      await tx.notification.create({
+        data: {
+          userId: auction.product.sellerId,
+          title:
+            status === 'ACTIVE'
+              ? 'Sản phẩm đã được duyệt!'
+              : 'Sản phẩm bị từ chối',
+          content:
+            status === 'ACTIVE'
+              ? `Sản phẩm ${auction.product.name} của bạn đã bắt đầu đấu giá.`
+              : `Lý do: ${reason}`,
+          type: 'SYSTEM',
+          link: `/auctions/${id}`,
+        },
+      });
+
+      return auction;
     });
   }
 }

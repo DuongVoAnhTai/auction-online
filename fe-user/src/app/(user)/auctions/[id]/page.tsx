@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { BiddingPanel } from "@/components/auction/BiddingPanel";
 import Link from "next/link";
+import { SellerInfo } from "@/components/auction/SellerInfo";
 
 export const metadata = { title: "Chi tiết sản phẩm - Hệ thống đấu giá" };
 
@@ -49,15 +50,14 @@ export default async function AuctionDetailPage({ params }: any) {
               </p>
             </TabsContent>
             <TabsContent value="seller" className="p-4 border rounded-lg mt-2">
-              <Link
+              <SellerInfo seller={auction.product.seller} />
+              {/* <Link
                 href={`/seller/${auction.product.seller.id}`}
                 className="flex items-center gap-4 p-2 rounded-md hover:bg-slate-50 transition-colors group"
               >
                 <Avatar className="h-12 w-12 border">
                   <AvatarImage src={auction.product.seller.avatarUrl} />
-                  {/* <AvatarFallback>
-                    {auction.product.seller.fullName.substring(0, 2)}
-                  </AvatarFallback> */}
+                 
                 </Avatar>
                 <div className="flex-1">
                   <p className="font-bold">{auction.product.seller.fullName}</p>
@@ -65,7 +65,7 @@ export default async function AuctionDetailPage({ params }: any) {
                     {auction.product.seller.email}
                   </p>
                 </div>
-              </Link>
+              </Link> */}
             </TabsContent>
           </Tabs>
         </div>
