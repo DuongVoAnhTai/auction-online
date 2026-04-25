@@ -66,7 +66,7 @@ export class AuctionsService {
         skip: skip,
         take: Number(limit),
         include: {
-          product: { include: { category: true } },
+          product: { include: { category: true, seller: true } },
         },
         orderBy: {
           ...(sort === 'price_asc' && { currentPrice: 'asc' }),
@@ -424,36 +424,46 @@ export class AuctionsService {
     });
   }
 
-  async updateStatus(
+  async handleApproval(
     id: string,
-    status: 'ACTIVE' | 'REJECTED',
+    action: 'approve' | 'reject',
     reason?: string,
   ) {
     return this.prisma.$transaction(async (tx) => {
-      const auction = await tx.auction.update({
+      // 1. Kiểm tra phiên đấu giá có tồn tại không
+      const auction = await tx.auction.findUnique({
         where: { id },
-        data: { status },
-        include: { product: { include: { seller: true } } },
+        include: { product: true },
       });
 
-      // Bắn thông báo cho người bán
+      if (!auction) throw new NotFoundException('Không tìm thấy phiên đấu giá');
+
+      const newStatus = action === 'approve' ? 'ACTIVE' : 'REJECTED';
+
+      // 2. Cập nhật trạng thái
+      const updatedAuction = await tx.auction.update({
+        where: { id },
+        data: { status: newStatus },
+      });
+
+      // 3. Tạo thông báo cho Seller
       await tx.notification.create({
         data: {
           userId: auction.product.sellerId,
           title:
-            status === 'ACTIVE'
+            action === 'approve'
               ? 'Sản phẩm đã được duyệt!'
               : 'Sản phẩm bị từ chối',
           content:
-            status === 'ACTIVE'
-              ? `Sản phẩm ${auction.product.name} của bạn đã bắt đầu đấu giá.`
-              : `Lý do: ${reason}`,
+            action === 'approve'
+              ? `Sản phẩm "${auction.product.name}" của bạn đã chính thức lên sàn.`
+              : `Lý do từ chối: ${reason}`,
           type: 'SYSTEM',
           link: `/auctions/${id}`,
         },
       });
 
-      return auction;
+      return updatedAuction;
     });
   }
 }

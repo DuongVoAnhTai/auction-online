@@ -46,23 +46,28 @@ export function MyAuctionsTab() {
     fetchMyAuctions();
   }, []);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return <Badge className="bg-blue-500">Đang đấu giá</Badge>;
-      case "PENDING":
-        return (
-          <Badge variant="outline" className="text-amber-500 border-amber-500">
-            Chờ duyệt
-          </Badge>
-        );
-      case "COMPLETED":
-        return <Badge className="bg-emerald-500">Đã kết thúc</Badge>;
-      case "CANCELLED":
-        return <Badge variant="destructive">Đã hủy</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
+  const getStatusBadge = (item: any) => {
+    const now = new Date().getTime();
+    const start = new Date(item.startTime).getTime();
+    const end = new Date(item.endTime).getTime();
+
+    if (item.status === "PENDING")
+      return (
+        <Badge variant="outline" className="text-amber-500 border-amber-500">
+          Chờ duyệt
+        </Badge>
+      );
+    if (item.status === "REJECTED")
+      return <Badge variant="destructive">Bị từ chối</Badge>;
+    if (item.status === "COMPLETED")
+      return <Badge className="bg-emerald-500">Đã kết thúc</Badge>;
+
+    if (now < start)
+      return <Badge className="bg-emerald-500">Sắp bắt đầu</Badge>;
+    if (now >= start && now < end)
+      return <Badge className="bg-blue-500">Đang đấu giá</Badge>;
+
+    return <Badge className="bg-gray-500">Đã kết thúc</Badge>;
   };
 
   const handleDelete = async (id: string) => {
@@ -135,7 +140,7 @@ export function MyAuctionsTab() {
                   <td className="p-4 font-bold text-primary">
                     {formatNumber(item.currentPrice)}đ
                   </td>
-                  <td className="p-4">{getStatusBadge(item.status)}</td>
+                  <td className="p-4">{getStatusBadge(item)}</td>
                   <td className="p-4 text-right">
                     <div className="flex justify-end gap-2">
                       <Button

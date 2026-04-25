@@ -77,3 +77,22 @@ export const deleteAuction = async (id: string) => {
     return { error: error.response?.data?.message || "Xóa thất bại" };
   }
 };
+
+export const getPendingAuctions = async () => {
+  return await httpRequest.get("auctions/admin/pending");
+};
+
+export const reviewAuction = async (
+  id: string,
+  action: "approve" | "reject",
+  reason?: string,
+) => {
+  try {
+    return await httpRequest.patch(`auctions/admin/${id}/review`, {
+      action,
+      reason,
+    });
+  } catch (error: any) {
+    return { error: error.response?.data?.message || "Thao tác thất bại" };
+  }
+};

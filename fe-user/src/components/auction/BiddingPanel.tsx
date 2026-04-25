@@ -127,6 +127,23 @@ export function BiddingPanel({ auction }: { auction: any }) {
     return "bg-primary"; // Mặc định cho ACTIVE
   };
 
+  const getActualStatus = () => {
+    const now = new Date().getTime();
+    const start = new Date(auction.startTime).getTime();
+    const end = new Date(endTime).getTime();
+
+    if (status === "PENDING") return "WAITING_REVIEW";
+    if (status === "REJECTED") return "REJECTED";
+    if (status === "COMPLETED") return "FINISHED";
+
+    // Nếu status là ACTIVE trong DB, ta check tiếp thời gian
+    if (now < start) return "UPCOMING";
+    if (now >= start && now < end) return "BIDDING";
+    return "FINISHED";
+  };
+
+  const actualStatus = getActualStatus();
+
   return (
     <Card className="border-2 border-primary/20 shadow-xl overflow-hidden">
       <div
@@ -147,16 +164,18 @@ export function BiddingPanel({ auction }: { auction: any }) {
             </div>
           </div>
           <Badge
-            variant="secondary"
+            variant={actualStatus === "BIDDING" ? "default" : "secondary"}
             className={
-              status === "ACTIVE" ? "animate-pulse bg-white text-primary" : ""
+              actualStatus === "BIDDING"
+                ? "animate-pulse bg-white text-primary"
+                : ""
             }
           >
-            {status === "ACTIVE"
-              ? "Đang diễn ra"
-              : status === "PENDING"
-                ? "Sắp diễn ra"
-                : "Đã kết thúc"}
+            {actualStatus === "BIDDING" && "Đang diễn ra"}
+            {actualStatus === "UPCOMING" && "Sắp diễn ra"}
+            {actualStatus === "FINISHED" && "Đã kết thúc"}
+            {actualStatus === "WAITING_REVIEW" && "Chờ duyệt"}
+            {actualStatus === "REJECTED" && "Bị từ chối"}
           </Badge>
         </div>
       </div>

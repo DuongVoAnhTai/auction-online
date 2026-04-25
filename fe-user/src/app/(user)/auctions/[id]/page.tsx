@@ -1,8 +1,6 @@
 import { getAuctionDetail } from "@/services/auctionServices";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { BiddingPanel } from "@/components/auction/BiddingPanel";
-import Link from "next/link";
 import { SellerInfo } from "@/components/auction/SellerInfo";
 
 export const metadata = { title: "Chi tiết sản phẩm - Hệ thống đấu giá" };

@@ -17,6 +17,8 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { CreateAuctionDto } from './dto/create-auction.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
 
 @Controller('auctions')
 export class AuctionsController {
@@ -84,5 +86,22 @@ export class AuctionsController {
   async getAuctionDetail(@Param('id') id: string) {
     return this.auctionsService.findOne(id);
   }
-  
+
+  @Get('admin/pending')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async getPending() {
+    return this.auctionsService.findAll({ status: 'PENDING' });
+  }
+
+  // Xử lý duyệt hoặc từ chối
+  @Patch('admin/:id/review')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async reviewAuction(
+    @Param('id') id: string,
+    @Body() body: { action: 'approve' | 'reject'; reason?: string },
+  ) {
+    return this.auctionsService.handleApproval(id, body.action, body.reason);
+  }
 }
