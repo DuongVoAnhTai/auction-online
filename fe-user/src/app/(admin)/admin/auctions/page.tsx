@@ -1,4 +1,3 @@
-import { getPendingAuctions } from "@/services/auctionServices";
 import { AuctionApprovalTable } from "@/components/admin/AuctionApprovalTable";
 import { cookies } from "next/headers";
 

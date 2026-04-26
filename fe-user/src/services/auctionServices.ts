@@ -78,10 +78,6 @@ export const deleteAuction = async (id: string) => {
   }
 };
 
-export const getPendingAuctions = async () => {
-  return await httpRequest.get("auctions/admin/pending");
-};
-
 export const reviewAuction = async (
   id: string,
   action: "approve" | "reject",

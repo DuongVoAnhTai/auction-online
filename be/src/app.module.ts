@@ -8,12 +8,11 @@ import { PrismaModule } from './prisma/prisma.module';
 import { MailService } from './mail/mail.service';
 import { MailModule } from './mail/mail.module';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
-import { AuctionsService } from './auctions/auctions.service';
-import { AuctionsController } from './auctions/auctions.controller';
 import { CategoriesModule } from './categories/categories.module';
 import { AuctionsModule } from './auctions/auctions.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -26,8 +25,9 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     ScheduleModule.forRoot(),
     NotificationsModule,
     CloudinaryModule,
+    AdminModule,
   ],
-  controllers: [AppController, AuctionsController],
-  providers: [AppService, MailService, CloudinaryService, AuctionsService],
+  controllers: [AppController],
+  providers: [AppService, MailService, CloudinaryService],
 })
 export class AppModule {}

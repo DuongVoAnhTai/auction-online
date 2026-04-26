@@ -40,9 +40,9 @@ export class AuctionsService {
     } = query;
 
     const skip = (Number(page) - 1) * Number(limit);
+    const now = new Date();
 
-    const where = {
-      status: status as any,
+    const where: any = {
       ...(categoryId && { product: { categoryId } }),
       ...(search && {
         product: {
@@ -57,6 +57,22 @@ export class AuctionsService {
         lte: maxPrice ? Number(maxPrice) : undefined,
       },
     };
+
+    if (status === 'ACTIVE') {
+      // Chỉ lấy những phiên ĐÃ DUYỆT và ĐANG TRONG GIỜ ĐẤU GIÁ
+      where.status = 'ACTIVE';
+      where.startTime = { lte: now };
+      where.endTime = { gt: now };
+    } else if (status === 'UPCOMING') {
+      // Chỉ lấy những phiên ĐÃ DUYỆT nhưng CHƯA TỚI GIỜ BẮT ĐẦU
+      where.status = 'ACTIVE';
+      where.startTime = { gt: now };
+    } else if (status === 'PENDING') {
+      // Chỉ dành cho ADMIN hoặc SELLER xem hàng chờ duyệt của mình
+      where.status = 'PENDING';
+    } else if (status === 'COMPLETED') {
+      where.status = 'COMPLETED';
+    }
 
     // 3. Gọi song song: Lấy dữ liệu và Đếm tổng số bản ghi
     const [totalItems, auctions] = await Promise.all([
@@ -263,24 +279,6 @@ export class AuctionsService {
   async updateAuctionStatuses() {
     const now = new Date();
 
-    // 1. Chuyển PENDING -> ACTIVE
-    const pendingAuctions = await this.prisma.auction.findMany({
-      where: {
-        status: 'PENDING',
-        startTime: { lte: now },
-      },
-      select: { id: true },
-    });
-
-    const activatedIds = pendingAuctions.map((a) => a.id);
-
-    if (activatedIds.length > 0) {
-      await this.prisma.auction.updateMany({
-        where: { id: { in: activatedIds } },
-        data: { status: 'ACTIVE' },
-      });
-    }
-
     // 2. Chuyển ACTIVE -> COMPLETED
     const expiredAuctions = await this.prisma.auction.findMany({
       where: {
@@ -299,8 +297,6 @@ export class AuctionsService {
     }
 
     return {
-      activatedCount: activatedIds.length,
-      activatedIds,
       completedAuctions: expiredAuctions,
     };
   }
@@ -429,15 +425,15 @@ export class AuctionsService {
     action: 'approve' | 'reject',
     reason?: string,
   ) {
-    return this.prisma.$transaction(async (tx) => {
-      // 1. Kiểm tra phiên đấu giá có tồn tại không
-      const auction = await tx.auction.findUnique({
-        where: { id },
-        include: { product: true },
-      });
+    // 1. Kiểm tra phiên đấu giá có tồn tại không (Lấy ra ngoài transaction để dùng cho Socket sau này)
+    const auction = await this.prisma.auction.findUnique({
+      where: { id },
+      include: { product: true },
+    });
 
-      if (!auction) throw new NotFoundException('Không tìm thấy phiên đấu giá');
+    if (!auction) throw new NotFoundException('Không tìm thấy phiên đấu giá');
 
+    const result = await this.prisma.$transaction(async (tx) => {
       const newStatus = action === 'approve' ? 'ACTIVE' : 'REJECTED';
 
       // 2. Cập nhật trạng thái
@@ -465,5 +461,18 @@ export class AuctionsService {
 
       return updatedAuction;
     });
+
+    if (action === 'approve') {
+      console.log(
+        `📢 Emitting globalUpdate for product: ${auction.product.name}`,
+      );
+      // BẮN TIN NHẮN TOÀN HỆ THỐNG NGAY KHI ADMIN DUYỆTz
+      this.notificationsGateway.server.emit('globalUpdate', {
+        message: `✨ Sản phẩm "${auction.product.name}" vừa được lên sàn! Đừng bỏ lỡ.`,
+        type: 'INFO',
+      });
+    }
+
+    return result;
   }
 }

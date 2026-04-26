@@ -106,25 +106,6 @@ export class AuctionsGateway
   async handleAuctionCron() {
     const result = await this.auctionsService.updateAuctionStatuses();
 
-    // Nếu có phiên vừa bắt đầu
-    if (result.activatedCount > 0) {
-      this.server.emit('globalUpdate', {
-        message: `🎉 Có ${result.activatedCount} phiên đấu giá mới vừa bắt đầu! Khám phá ngay.`,
-        type: 'INFO',
-      });
-    }
-
-    // Auction Started
-    if (result.activatedIds && result.activatedIds.length > 0) {
-      for (const id of result.activatedIds) {
-        this.server.to(`auction_${id}`).emit('auctionStarted', {
-          auctionId: id,
-          status: 'ACTIVE',
-        });
-        console.log(`⚡ Phiên ${id} đã chính thức bắt đầu!`);
-      }
-    }
-
     // Nếu có phiên vừa kết thúc
     for (const auction of result.completedAuctions) {
       // Bắn tin nhắn vào phòng riêng của phiên đó

@@ -59,6 +59,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       });
 
+      // Lắng nghe thông báo toàn hệ thống (Global)
+      newSocket.on("globalUpdate", (data: { message: string }) => {
+        console.log("📥 Received globalUpdate:", data.message);
+        toast.info("Thông báo hệ thống", {
+          id: `global-${data.message}`, // Chống lặp toast cho cùng một nội dung trong thời gian ngắn
+          description: data.message,
+          duration: 8000,
+        });
+      });
+
       return () => {
         newSocket.disconnect();
       };

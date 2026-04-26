@@ -63,14 +63,6 @@ export const useAuctionSocket = (
       toast.error(error.message || "Có lỗi xảy ra khi đặt giá");
     });
 
-    // Lắng nghe thông báo toàn hệ thống
-    socket.on("globalUpdate", (data: { message: string }) => {
-      toast.info("Thông báo hệ thống", {
-        description: data.message,
-        duration: 5000,
-      });
-    });
-
     // Phiên đấu giá bắt đầu
     socket.on("auctionStarted", (data: { status: string }) => {
       setStatus("ACTIVE");
