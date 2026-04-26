@@ -83,4 +83,35 @@ export class UsersService {
       data,
     });
   }
+
+  async findAllAdmin(search?: string) {
+    const users = await this.prisma.user.findMany({
+      where: search
+        ? {
+            OR: [
+              { fullName: { contains: search, mode: 'insensitive' } },
+              { email: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {},
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        avatarUrl: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return { data: users };
+  }
+
+  async changeRole(userId: string, newRole: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { role: newRole as any },
+    });
+  }
 }

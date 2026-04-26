@@ -34,3 +34,7 @@ export const uploadAvatar = async (file: File) => {
     return { error: "Upload ảnh thất bại" };
   }
 };
+
+export const updateUserRole = async (id: string, role: string) => {
+  return await httpRequest.patch(`users/admin/${id}/role`, { role });
+};
