@@ -12,7 +12,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { MailService } from 'src/mail/mail.service';
-import { generateSecret, generateURI, verify } from 'otplib';
+import { authenticator } from '@otplib/preset-default';
 import * as QRCode from 'qrcode';
 
 @Injectable()
@@ -115,12 +115,12 @@ export class AuthService {
 
   // 1. Tạo Secret Key và QR Code cho người dùng quét
   async generateTwoFactorAuthenticationSecret(user: any) {
-    const secret = generateSecret();
-    const otpauthUrl = generateURI({
-      label: user.email,
-      issuer: 'T-Auction System',
+    const secret = authenticator.generateSecret();
+    const otpauthUrl = authenticator.keyuri(
+      user.email,
+      'T-Auction System',
       secret,
-    });
+    );
     const qrCodeDataURL = await QRCode.toDataURL(otpauthUrl);
 
     return {
@@ -134,7 +134,7 @@ export class AuthService {
     twoFactorAuthenticationCode: string,
     userSecret: string,
   ) {
-    return verify({
+    return authenticator.verify({
       token: twoFactorAuthenticationCode,
       secret: userSecret,
     });

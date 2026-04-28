@@ -35,7 +35,7 @@ export default async function Home() {
             Xem tất cả
           </Link>
         </h2>
-        <div className="grid grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {endingSoon.map((item: any) => (
             <AuctionCard key={item.id} auction={item} />
           ))}
@@ -49,7 +49,7 @@ export default async function Home() {
             Xem tất cả
           </Link>
         </h2>
-        <div className="grid grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {latest.map((item: any) => (
             <AuctionCard key={item.id} auction={item} />
           ))}

@@ -14,7 +14,15 @@ import { Button } from "../ui/button";
 const resetSchema = z
   .object({
     otp: z.string().length(6, "Mã OTP phải có 6 chữ số"),
-    newPassword: z.string().min(8, "Mật khẩu mới ít nhất 8 ký tự"),
+    newPassword: z
+      .string()
+      .trim()
+      .min(1, "Vui lòng nhập mật khẩu mới")
+      .min(8, "Mật khẩu mới ít nhất 8 ký tự")
+      .regex(/[A-Z]/, "Phải có ít nhất 1 chữ cái viết hoa")
+      .regex(/[a-z]/, "Phải có nhất 1 chữ cái viết thường")
+      .regex(/[0-9]/, "Phải có ít nhất 1 con số")
+      .regex(/[!@#$%^&*]/, "Phải có ít nhất 1 ký tự đặc biệt (!@#$%^&*)"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {

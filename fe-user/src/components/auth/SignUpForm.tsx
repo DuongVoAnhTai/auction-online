@@ -32,7 +32,7 @@ const registerSchema = z
       .regex(/[A-Z]/, "Phải có ít nhất 1 chữ cái viết hoa")
       .regex(/[a-z]/, "Phải có nhất 1 chữ cái viết thường")
       .regex(/[0-9]/, "Phải có ít nhất 1 con số")
-      .regex(/[@$!%*?&]/, "Phải có ít nhất 1 ký tự đặc biệt (@$!%*?&)"),
+      .regex(/[!@#$%^&*]/, "Phải có ít nhất 1 ký tự đặc biệt (!@#$%^&*)"),
     confirmPassword: z
       .string()
       .trim()

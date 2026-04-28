@@ -63,15 +63,33 @@ export const resetPassword = async (otp: string, newPassword: string) => {
 };
 
 export const generate2FA = async () => {
-  return await httpRequest.post("auth/2fa/generate");
+  try {
+    return await httpRequest.post("auth/2fa/generate");
+  } catch (error: any) {
+    return {
+      error: error.response?.data?.message || "Không thể tạo mã QR",
+    };
+  }
 };
 
 export const turnOn2FA = async (otp: string, secret: string) => {
-  return await httpRequest.post("auth/2fa/turn-on", { otp, secret });
+  try {
+    return await httpRequest.post("auth/2fa/turn-on", { otp, secret });
+  } catch (error: any) {
+    return {
+      error: error.response?.data?.message || "Kích hoạt 2FA thất bại",
+    };
+  }
 };
 
 export const turnOff2FA = async () => {
-  return await httpRequest.post("auth/2fa/turn-off");
+  try {
+    return await httpRequest.post("auth/2fa/turn-off");
+  } catch (error: any) {
+    return {
+      error: error.response?.data?.message || "Tắt 2FA thất bại",
+    };
+  }
 };
 
 export const loginWith2FA = async (userId: string, otp: string) => {
