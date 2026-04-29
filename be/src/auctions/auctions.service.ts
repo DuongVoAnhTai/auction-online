@@ -215,7 +215,29 @@ export class AuctionsService {
     // 5. SỬ DỤNG TRANSACTION ĐỂ XỬ LÝ TRANH CHẤP (CONCURRENCY)
     try {
       return await this.prisma.$transaction(async (tx) => {
-        // Thực hiện Update với điều kiện Optimistic Locking (where version = current_version)
+        // 1. Tạo bản ghi lượt Bid chính thức trước
+        const newBid = await tx.bid.create({
+          data: {
+            auctionId,
+            bidderId: userId,
+            amount,
+          },
+          include: {
+            bidder: { select: { fullName: true, avatarUrl: true } },
+          },
+        });
+
+        // 2. Ghi vào nhật ký BidLog (Success)
+        await tx.bidLog.create({
+          data: {
+            auctionId,
+            bidderId: userId,
+            amount,
+            status: 'SUCCESS',
+          },
+        });
+
+        // 3. Thực hiện Update với điều kiện Optimistic Locking (where version = current_version)
         const updatedAuction = await tx.auction.update({
           where: {
             id: auctionId,
@@ -228,28 +250,6 @@ export class AuctionsService {
           },
           include: {
             _count: { select: { bids: true } },
-          },
-        });
-
-        // Tạo bản ghi lượt Bid chính thức
-        const newBid = await tx.bid.create({
-          data: {
-            auctionId,
-            bidderId: userId,
-            amount,
-          },
-          include: {
-            bidder: { select: { fullName: true, avatarUrl: true } },
-          },
-        });
-
-        // Ghi vào nhật ký BidLog (Success)
-        await tx.bidLog.create({
-          data: {
-            auctionId,
-            bidderId: userId,
-            amount,
-            status: 'SUCCESS',
           },
         });
 
