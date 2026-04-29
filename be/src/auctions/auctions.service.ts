@@ -83,6 +83,7 @@ export class AuctionsService {
         take: Number(limit),
         include: {
           product: { include: { category: true, seller: true } },
+          _count: { select: { bids: true } },
         },
         orderBy: {
           ...(sort === 'price_asc' && { currentPrice: 'asc' }),
@@ -117,6 +118,7 @@ export class AuctionsService {
             seller: {
               // Lấy thông tin người bán
               select: {
+                id: true,
                 fullName: true,
                 avatarUrl: true,
                 email: true,
@@ -132,6 +134,7 @@ export class AuctionsService {
             bidder: { select: { id: true, fullName: true, avatarUrl: true } },
           },
         },
+        _count: { select: { bids: true } },
       },
     });
   }
@@ -223,6 +226,9 @@ export class AuctionsService {
             currentWinnerId: userId,
             version: { increment: 1 }, // Tăng version lên để người sau ko dùng version cũ được nữa
           },
+          include: {
+            _count: { select: { bids: true } },
+          },
         });
 
         // Tạo bản ghi lượt Bid chính thức
@@ -258,6 +264,9 @@ export class AuctionsService {
           finalAuction = await tx.auction.update({
             where: { id: auctionId },
             data: { endTime: newEndTime },
+            include: {
+              _count: { select: { bids: true } },
+            },
           });
 
           console.log(`⏰ Gia hạn phiên ${auctionId} thêm 30s từ bây giờ.`);
@@ -360,6 +369,7 @@ export class AuctionsService {
             category: true,
           },
         },
+        _count: { select: { bids: true } },
       },
       orderBy: {
         startTime: 'desc',

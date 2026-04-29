@@ -9,6 +9,7 @@ export const useAuctionSocket = (
   initialEndTime: string,
   initialBids: any[] = [],
   initialStatus: string,
+  initialBidCount: number = 0,
 ) => {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -16,6 +17,7 @@ export const useAuctionSocket = (
   const [bidHistory, setBidHistory] = useState<any[]>(initialBids);
   const [endTime, setEndTime] = useState<string>(initialEndTime);
   const [status, setStatus] = useState(initialStatus);
+  const [bidCount, setBidCount] = useState<number>(initialBidCount);
 
   useEffect(() => {
     const token = Cookies.get("access_token");
@@ -40,12 +42,21 @@ export const useAuctionSocket = (
       setIsConnected(false);
     });
 
-    // 3. Lắng nghe cập nhật giá mới (Chúng ta sẽ làm sự kiện này ở bước sau)
+    // 3. Lắng nghe cập nhật giá mới
     socket.on(
       "bidUpdated",
-      (data: { newPrice: number; newBid: any; newEndTime?: string }) => {
+      (data: {
+        newPrice: number;
+        newBid: any;
+        newEndTime?: string;
+        bidCount?: number;
+      }) => {
         setCurrentPrice(data.newPrice);
         setBidHistory((prev) => [data.newBid, ...prev].slice(0, 10));
+
+        if (data.bidCount !== undefined) {
+          setBidCount(data.bidCount);
+        }
 
         // CẬP NHẬT THỜI GIAN MỚI NẾU CÓ
         if (
@@ -103,5 +114,6 @@ export const useAuctionSocket = (
     bidHistory,
     placeBid,
     status,
+    bidCount,
   };
 };

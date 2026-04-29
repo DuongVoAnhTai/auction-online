@@ -28,13 +28,12 @@ export function BidHistory({ bids }: { bids: any[] }) {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8 border">
-                      {/* Vẫn hiện avatar để giao diện đẹp, hoặc Tài có thể ẩn luôn nếu muốn bảo mật tuyệt đối */}
+                    {/* <Avatar className="h-8 w-8 border">
                       <AvatarImage src={bid.bidder.avatarUrl} />
                       <AvatarFallback className="text-[10px]">
                         {bid.bidder.fullName.substring(0, 2)}
                       </AvatarFallback>
-                    </Avatar>
+                    </Avatar> */}
 
                     <div>
                       <p

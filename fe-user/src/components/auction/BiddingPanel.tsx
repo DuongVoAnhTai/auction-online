@@ -27,13 +27,14 @@ export function BiddingPanel({ auction }: { auction: any }) {
   const [bidAmount, setBidAmount] = useState<number>(0);
   const pathname = usePathname();
 
-  const { currentPrice, endTime, placeBid, bidHistory, status } =
+  const { currentPrice, endTime, placeBid, bidHistory, status, bidCount } =
     useAuctionSocket(
       auction.id,
       Number(auction.currentPrice),
       auction.endTime,
       auction.bids || [],
       auction.status,
+      auction._count?.bids || 0,
     );
 
   // Mức giá tối thiểu người dùng phải trả
@@ -184,8 +185,11 @@ export function BiddingPanel({ auction }: { auction: any }) {
         {/* Khối hiển thị giá hiện tại */}
         <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-dashed">
           <div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground flex items-center gap-2">
               Giá cao nhất hiện tại
+              <Badge variant="secondary" className="px-2 py-0 h-5 text-[10px] font-normal">
+                {bidCount} lượt bid
+              </Badge>
             </p>
             <p className="text-3xl font-extrabold text-primary">
               {formatNumber(currentPrice)}đ

@@ -137,8 +137,15 @@ export function MyAuctionsTab() {
                   <td className="p-4 text-muted-foreground">
                     {item.product.category.name}
                   </td>
-                  <td className="p-4 font-bold text-primary">
-                    {formatNumber(item.currentPrice)}đ
+                  <td className="p-4">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-primary">
+                        {formatNumber(item.currentPrice)}đ
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {item._count?.bids || 0} lượt trả giá
+                      </span>
+                    </div>
                   </td>
                   <td className="p-4">{getStatusBadge(item)}</td>
                   <td className="p-4 text-right">

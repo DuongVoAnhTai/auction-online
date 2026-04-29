@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from 'src/auth/dto/register.dto';
@@ -113,5 +114,38 @@ export class UsersService {
       where: { id: userId },
       data: { role: newRole as any },
     });
+  }
+
+  async getPublicProfile(sellerId: string) {
+    const seller = await this.prisma.user.findUnique({
+      where: { id: sellerId },
+      select: {
+        id: true,
+        fullName: true,
+        avatarUrl: true,
+        createdAt: true,
+        _count: {
+          select: {
+            products: true,
+          },
+        },
+      },
+    });
+
+    if (!seller) throw new NotFoundException('Không tìm thấy người bán');
+
+    const auctions = await this.prisma.auction.findMany({
+      where: {
+        product: { sellerId: sellerId },
+        status: { in: ['ACTIVE', 'COMPLETED'] },
+      },
+      include: {
+        product: { include: { category: true } },
+        _count: { select: { bids: true } },
+      },
+      orderBy: { startTime: 'desc' },
+    });
+
+    return { seller, auctions };
   }
 }

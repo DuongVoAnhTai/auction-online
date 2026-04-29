@@ -38,3 +38,11 @@ export const uploadAvatar = async (file: File) => {
 export const updateUserRole = async (id: string, role: string) => {
   return await httpRequest.patch(`users/admin/${id}/role`, { role });
 };
+
+export const getSellerPublicProfile = async (id: string) => {
+  try {
+    return await httpRequest.get(`users/seller/${id}`);
+  } catch (error) {
+    return null;
+  }
+};

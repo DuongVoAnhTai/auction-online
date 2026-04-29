@@ -137,7 +137,10 @@ export function AuctionCard({ auction }: { auction: any }) {
               {Number(auction.currentPrice).toLocaleString()} đ
             </p>
           </div>
-          <div className="text-right">
+          <div className="text-right flex flex-col items-end">
+            <Badge variant="secondary" className="text-[10px] font-medium mb-1">
+              {auction._count?.bids || 0} lượt bid
+            </Badge>
             <p className="text-[10px] text-muted-foreground">
               Bước giá: {Number(auction.bidIncrement).toLocaleString()} đ
             </p>

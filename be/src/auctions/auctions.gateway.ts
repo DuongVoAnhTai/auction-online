@@ -95,6 +95,7 @@ export class AuctionsGateway
         bidderName: result.newBid.bidder.fullName,
         newBid: result.newBid,
         newEndTime: result.updatedAuction.endTime, // Gửi kèm thời gian mới nếu có gia hạn
+        bidCount: Number(result.updatedAuction._count.bids),
       });
 
       return { status: 'success' };

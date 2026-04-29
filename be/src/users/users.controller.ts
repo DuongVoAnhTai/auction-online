@@ -19,23 +19,25 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
+  @UseGuards(JwtAuthGuard)
   @Get('email')
   async findByEmail(@Query('email') email: string) {
     return this.usersService.findByEmail(email);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('profile')
   async getProfile(@Req() req) {
     return this.usersService.getProfile(req.user.sub);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch('update')
   async updateProfile(
     @Req() req,
@@ -45,11 +47,17 @@ export class UsersController {
   }
 
   // API Upload ảnh lên Cloudinary
+  @UseGuards(JwtAuthGuard)
   @Post('upload-avatar')
   @UseInterceptors(FileInterceptor('file'))
   async uploadAvatar(@UploadedFile() file: Express.Multer.File) {
     const result = await this.cloudinaryService.uploadImage(file, 'avatars');
     return { url: result.url };
+  }
+
+  @Get('seller/:id')
+  async getPublicSellerProfile(@Param('id') id: string) {
+    return this.usersService.getPublicProfile(id);
   }
 
   @Get('admin/all')
