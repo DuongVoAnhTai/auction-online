@@ -11,6 +11,7 @@ import { Server, Socket } from 'socket.io';
 import { AuctionsService } from './auctions.service';
 import { JwtService } from '@nestjs/jwt';
 import { Cron } from '@nestjs/schedule';
+import { NotificationsGateway } from 'src/notifications/notifications.gateway';
 
 // Cấu hình Gateway với CORS để cho phép Frontend truy cập
 @WebSocketGateway({
@@ -29,6 +30,7 @@ export class AuctionsGateway
   constructor(
     private readonly auctionsService: AuctionsService,
     private readonly jwtService: JwtService,
+    private readonly notificationsGateway: NotificationsGateway,
   ) {}
 
   // 1. Chạy khi có một người dùng kết nối vào Socket
@@ -108,16 +110,37 @@ export class AuctionsGateway
 
     // Nếu có phiên vừa kết thúc
     for (const auction of result.completedAuctions) {
-      // Bắn tin nhắn vào phòng riêng của phiên đó
+      // 1. Gửi cho người thắng (WINNER)
+      if (auction.currentWinnerId) {
+        this.notificationsGateway.sendToUser(
+          auction.currentWinnerId,
+          'newNotification',
+          {
+            title: '🎉 Chúc mừng! Bạn đã thắng cuộc',
+            content: `Sản phẩm "${auction.product.name}" đã thuộc về bạn!`,
+            type: 'WINNER',
+            link: `/auctions/${auction.id}`,
+          },
+        );
+      }
+
+      // 2. Gửi cho người bán (AUCTION_END)
+      this.notificationsGateway.sendToUser(
+        auction.product.sellerId,
+        'newNotification',
+        {
+          title: '🏁 Phiên đấu giá kết thúc',
+          content: `Phiên đấu giá sản phẩm "${auction.product.name}" đã kết thúc.`,
+          type: 'AUCTION_END',
+          link: `/auctions/${auction.id}`,
+        },
+      );
+
+      // 3. Thông báo chung trong phòng (để mọi người biết phiên đã đóng)
       this.server.to(`auction_${auction.id}`).emit('auctionFinished', {
         auctionId: auction.id,
         winnerId: auction.currentWinnerId,
-        finalPrice: auction.currentPrice,
       });
-
-      console.log(
-        `🏁 Phiên ${auction.id} đã kết thúc. Winner: ${auction.currentWinnerId}`,
-      );
     }
   }
 }

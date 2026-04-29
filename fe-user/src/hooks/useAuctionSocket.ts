@@ -75,6 +75,7 @@ export const useAuctionSocket = (
     socket.on("auctionFinished", (data) => {
       setStatus("COMPLETED");
       toast.success("Phiên đấu giá đã kết thúc!", {
+        id: `auction-${data.auctionId}`,
         description: data.winnerId
           ? "Đã tìm thấy người thắng cuộc."
           : "Không có người tham gia trả giá.",

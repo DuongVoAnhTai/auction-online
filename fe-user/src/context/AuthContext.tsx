@@ -49,14 +49,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       newSocket.on("newNotification", (data) => {
         setNotifications((prev) => [data, ...prev]);
         setUnreadCount((prev) => prev + 1);
-        toast.warning(data.title, {
-          description: data.content,
-          duration: 10000,
-          action: {
-            label: "Đặt lại giá",
-            onClick: () => (window.location.href = data.link),
-          },
-        });
+
+        if (data.type === "WINNER") {
+          toast.success(data.title, {
+            id: `global-${data.content}`,
+            description: data.content,
+            duration: 20000, // Hiện lâu hơn (20 giây) để chúc mừng
+            icon: "🏆",
+          });
+        } else if (data.type === "AUCTION_END") {
+          toast.info(data.title, {
+            id: `global-${data.content}`,
+            description: data.content,
+            icon: "🏁",
+          });
+        } else {
+          toast.warning(data.title, {
+            id: `global-${data.content}`,
+            description: data.content,
+            duration: 10000,
+            action: {
+              label: "Đặt lại giá",
+              onClick: () => (window.location.href = data.link),
+            },
+          });
+        }
       });
 
       // Lắng nghe thông báo toàn hệ thống (Global)

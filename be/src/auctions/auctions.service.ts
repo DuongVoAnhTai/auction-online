@@ -279,26 +279,72 @@ export class AuctionsService {
   async updateAuctionStatuses() {
     const now = new Date();
 
-    // 2. Chuyển ACTIVE -> COMPLETED
+    // 1. Tìm những phiên ACTIVE đã hết giờ
     const expiredAuctions = await this.prisma.auction.findMany({
       where: {
         status: 'ACTIVE',
         endTime: { lte: now },
       },
-      select: { id: true, currentWinnerId: true, currentPrice: true },
+      include: {
+        product: { select: { name: true, sellerId: true } },
+      },
     });
 
-    if (expiredAuctions.length > 0) {
-      const expiredIds = expiredAuctions.map((a) => a.id);
-      await this.prisma.auction.updateMany({
-        where: { id: { in: expiredIds } },
-        data: { status: 'COMPLETED' },
+    if (expiredAuctions.length === 0) return { completedAuctions: [] };
+
+    const results: any[] = [];
+
+    // 2. Duyệt qua từng phiên để xử lý thông báo riêng biệt
+    for (const auction of expiredAuctions) {
+      await this.prisma.$transaction(async (tx) => {
+        // Cập nhật trạng thái phiên
+        await tx.auction.update({
+          where: { id: auction.id },
+          data: { status: 'COMPLETED' },
+        });
+
+        // KỊCH BẢN 1: CÓ NGƯỜI THẮNG (WINNER)
+        if (auction.currentWinnerId) {
+          // Thông báo cho Người Thắng
+          await tx.notification.create({
+            data: {
+              userId: auction.currentWinnerId,
+              type: 'WINNER',
+              title: '🎉 Chúc mừng! Bạn đã thắng cuộc',
+              content: `Bạn là người trả giá cao nhất cho sản phẩm "${auction.product.name}" với mức giá ${Number(auction.currentPrice).toLocaleString()}đ.`,
+              link: `/auctions/${auction.id}`,
+            },
+          });
+
+          // Thông báo cho Người Bán (AUCTION_END)
+          await tx.notification.create({
+            data: {
+              userId: auction.product.sellerId,
+              type: 'AUCTION_END',
+              title: '🏁 Phiên đấu giá kết thúc',
+              content: `Sản phẩm "${auction.product.name}" đã kết thúc thành công với người thắng cuộc.`,
+              link: `/auctions/${auction.id}`,
+            },
+          });
+        }
+        // KỊCH BẢN 2: KHÔNG CÓ AI BID
+        else {
+          await tx.notification.create({
+            data: {
+              userId: auction.product.sellerId,
+              type: 'AUCTION_END',
+              title: '🏁 Phiên đấu giá kết thúc',
+              content: `Rất tiếc, sản phẩm "${auction.product.name}" đã kết thúc mà không có lượt trả giá nào.`,
+              link: `/auctions/${auction.id}`,
+            },
+          });
+        }
       });
+
+      results.push(auction);
     }
 
-    return {
-      completedAuctions: expiredAuctions,
-    };
+    return { completedAuctions: results };
   }
 
   async findBySeller(userId: string) {
