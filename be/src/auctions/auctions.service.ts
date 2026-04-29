@@ -129,7 +129,7 @@ export class AuctionsService {
           orderBy: { amount: 'desc' },
           take: 10, // Lấy 10 lượt trả giá gần nhất để hiện lịch sử
           include: {
-            bidder: { select: { fullName: true, avatarUrl: true } },
+            bidder: { select: { id: true, fullName: true, avatarUrl: true } },
           },
         },
       },
@@ -508,11 +508,29 @@ export class AuctionsService {
       return updatedAuction;
     });
 
+    // 4. Bắn Socket Real-time cho Seller để hiện ở Bell Icon
+    this.notificationsGateway.sendToUser(
+      auction.product.sellerId,
+      'newNotification',
+      {
+        title:
+          action === 'approve'
+            ? 'Sản phẩm đã được duyệt!'
+            : 'Sản phẩm bị từ chối',
+        content:
+          action === 'approve'
+            ? `Sản phẩm "${auction.product.name}" của bạn đã chính thức lên sàn.`
+            : `Lý do từ chối: ${reason}`,
+        type: 'SYSTEM',
+        link: `/auctions/${id}`,
+      },
+    );
+
     if (action === 'approve') {
       console.log(
         `📢 Emitting globalUpdate for product: ${auction.product.name}`,
       );
-      // BẮN TIN NHẮN TOÀN HỆ THỐNG NGAY KHI ADMIN DUYỆTz
+      // BẮN TIN NHẮN TOÀN HỆ THỐNG NGAY KHI ADMIN DUYỆT
       this.notificationsGateway.server.emit('globalUpdate', {
         message: `✨ Sản phẩm "${auction.product.name}" vừa được lên sàn! Đừng bỏ lỡ.`,
         type: 'INFO',

@@ -10,3 +10,19 @@ export const formatNumber = (value: number | string) => {
 export const parseNumber = (formattedValue: string) => {
   return Number(formattedValue.replace(/\D/g, ""));
 };
+
+export const maskName = (name: string) => {
+  if (!name) return "****";
+  const trimmedName = name.trim();
+
+  // Nếu tên quá ngắn (1-2 ký tự) thì hiện ký tự đầu + ***
+  if (trimmedName.length <= 2) {
+    return trimmedName[0] + "***";
+  }
+
+  // Lấy ký tự đầu và ký tự cuối
+  const firstChar = trimmedName[0];
+  const lastChar = trimmedName[trimmedName.length - 1];
+
+  return `${firstChar}***${lastChar}`;
+};

@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           toast.success(data.title, {
             id: `global-${data.content}`,
             description: data.content,
-            duration: 20000, // Hiện lâu hơn (20 giây) để chúc mừng
+            duration: 20000,
             icon: "🏆",
           });
         } else if (data.type === "AUCTION_END") {
@@ -63,13 +63,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             description: data.content,
             icon: "🏁",
           });
+        } else if (data.type === "SYSTEM") {
+          const isApprove = data.title.includes("được duyệt");
+          toast[isApprove ? "success" : "error"](data.title, {
+            id: `global-${data.content}`,
+            description: data.content,
+            icon: isApprove ? "✅" : "❌",
+          });
         } else {
           toast.warning(data.title, {
             id: `global-${data.content}`,
             description: data.content,
             duration: 10000,
             action: {
-              label: "Đặt lại giá",
+              label: "Xem chi tiết",
               onClick: () => (window.location.href = data.link),
             },
           });

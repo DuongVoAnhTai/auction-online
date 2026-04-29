@@ -139,8 +139,11 @@ export function Header() {
                   >
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
-                        {unreadCount > 9 ? "9+" : unreadCount}
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex items-center justify-center rounded-full h-4 w-4 bg-red-600 text-[10px] font-bold text-white">
+                          {unreadCount > 9 ? "9+" : unreadCount}
+                        </span>
                       </span>
                     )}
                   </Button>
@@ -161,9 +164,9 @@ export function Header() {
                   <ScrollArea className="h-[350px] pr-4">
                     {notifications.length > 0 ? (
                       <div className="flex flex-col">
-                        {notifications.map((notif) => (
+                        {notifications.map((notif, index) => (
                           <Link
-                            key={notif.id}
+                            key={index}
                             href={notif.link || "#"}
                             className={`p-4 border-b transition-colors ${notif.isRead ? "bg-white" : "bg-blue-50/50"}`}
                           >
